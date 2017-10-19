@@ -287,7 +287,7 @@ public class JavaStackCore {
                   "        }\n" +
                   "    }\n" +
                   "}",
-          this.username, "default", this.password, this.projectId, this.tenantName);
+          this.username, "default", this.password, this.tenantName);
 
       post.setEntity(new StringEntity(body, ContentType.APPLICATION_JSON));
 
@@ -296,9 +296,6 @@ public class JavaStackCore {
       // Logger.debug("[JavaStack] " + body);
 
       response = httpClient.execute(post);
-
-      Logger.debug("[JavaStack] Authentication response:");
-      Logger.debug(JavaStackUtils.convertHttpResponseToString(response));
 
       if (response.containsHeader("X-Subject-Token")) {
         this.token_id = response.getFirstHeader("X-Subject-Token").getValue();
