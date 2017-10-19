@@ -163,9 +163,9 @@ public class JavaStackCore {
   }
 
   private static final org.slf4j.Logger Logger = LoggerFactory.getLogger(JavaStackCore.class);
-  
+
   public static JavaStackCore getJavaStackCore() {
-    return SingeltonJavaStackCoreHelper._javaStackCore;    
+    return SingeltonJavaStackCoreHelper._javaStackCore;
   }
 
   private String endpoint;
@@ -181,6 +181,8 @@ public class JavaStackCore {
   private String projectId;
 
   private String projectName;
+
+  private String tenantName;
 
 
 
@@ -262,14 +264,30 @@ public class JavaStackCore {
 
       post = new HttpPost(buildUrl.toString());
       String body = String.format(
-          "{\n" + "    \"auth\": {\n" + "        \"identity\": {\n" + "            \"methods\": [\n"
-              + "                \"password\"\n" + "            ],\n"
-              + "            \"password\": {\n" + "                \"user\": {\n"
-              + "                    \"name\": \"%s\",\n" + "                    \"domain\": {\n"
-              + "                        \"name\": \"%s\"\n" + "                    },\n"
-              + "                    \"password\": \"%s\"\n" + "                }\n"
-              + "            }\n" + "        }\n" + "    }\n" + "}",
-          this.username, "default", this.password);
+          "{\n" +
+                  "    \"auth\": {\n" +
+                  "        \"identity\": {\n" +
+                  "            \"methods\": [\n" +
+                  "                \"password\"\n" +
+                  "            ],\n" +
+                  "            \"password\": {\n" +
+                  "                \"user\": {\n" +
+                  "                \t\"name\": \"%s\",\n" +
+                  "                \t\"domain\": {\n" +
+                  "                        \"name\": \"%s\"\n" +
+                  "                    },\n" +
+                  "                    \"password\": \"%s\"\n" +
+                  "                }\n" +
+                  "            }\n" +
+                  "        },\n" +
+                  "        \"scope\": {\n" +
+                  "        \t\"project\": {\n" +
+                  "                \"id\": \"%s\"\n" +
+                  "            }\n" +
+                  "        }\n" +
+                  "    }\n" +
+                  "}",
+          this.username, "default", this.password, this.projectId, this.tenantName);
 
       post.setEntity(new StringEntity(body, ContentType.APPLICATION_JSON));
 
@@ -280,7 +298,7 @@ public class JavaStackCore {
       response = httpClient.execute(post);
 
       Logger.debug("[JavaStack] Authentication response:");
-      Logger.debug(response.toString());
+      Logger.debug(JavaStackUtils.convertHttpResponseToString(response));
 
       if (response.containsHeader("X-Subject-Token")) {
         this.token_id = response.getFirstHeader("X-Subject-Token").getValue();
@@ -834,6 +852,10 @@ public class JavaStackCore {
 
   public void setUsername(String username) {
     this.username = username;
+  }
+
+  public void setTenantName(String tenantName) {
+      this.tenantName = tenantName;
   }
 
   /**
