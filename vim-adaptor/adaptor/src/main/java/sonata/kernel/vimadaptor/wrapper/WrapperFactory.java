@@ -34,6 +34,7 @@ import sonata.kernel.vimadaptor.wrapper.openstack.OpenStackHeatWrapper;
 import sonata.kernel.vimadaptor.wrapper.ovsWrapper.OvsWrapper;
 import sonata.kernel.vimadaptor.wrapper.sp.ComputeSPWrapper;
 import sonata.kernel.vimadaptor.wrapper.sp.NetworkSPWrapper;
+import sonata.kernel.vimadaptor.wrapper.kubernetes.KubernetesWrapper;
 
 public class WrapperFactory {
 
@@ -78,6 +79,8 @@ public class WrapperFactory {
       output = new OpenStackHeatWrapper(config);
     } else if (config.getVimVendor().equals(ComputeVimVendor.SPVIM)){
       output = new ComputeSPWrapper(config);
+    } else if (config.getVimVendor().equals(ComputeVimVendor.KUBERNETES)) {
+      output = new KubernetesWrapper(config);
     }
     // TODO Extends with all wrappers or refactor with a more OO type
     // generation
