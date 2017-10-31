@@ -46,6 +46,8 @@ public class VimResources {
   private String vimName;
   @JsonProperty("vim_uuid")
   private String vimUuid;
+  @JsonProperty("vim_type")
+  private String vimType;
 
   public int getCoreTotal() {
     return coreTotal;
@@ -77,6 +79,10 @@ public class VimResources {
 
   public String getVimUuid() {
     return vimUuid;
+  }
+
+  public String getVimType() {
+    return this.vimType;
   }
 
   public void setCoreTotal(int coreTotal) {
@@ -111,5 +117,7 @@ public class VimResources {
     this.vimUuid = vimUuid;
   }
 
-
+  public void setVimType(String vimType) {
+    this.vimType = vimType;
+  }
 }

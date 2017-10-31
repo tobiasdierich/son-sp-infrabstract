@@ -76,6 +76,7 @@ public class ListComputeVimCallProcessor extends AbstractCallProcessor {
         bodyElement.setVimUuid(vimUuid);
         bodyElement.setVimCity(wr.getConfig().getCity());
         bodyElement.setVimName(wr.getConfig().getName());
+        bodyElement.setVimType(wr.getConfig().getVimVendor().toString());
         bodyElement.setVimEndpoint(wr.getConfig().getVimEndpoint());
         bodyElement.setCoreTotal(resource.getTotCores());
         bodyElement.setCoreUsed(resource.getUsedCores());
@@ -88,6 +89,7 @@ public class ListComputeVimCallProcessor extends AbstractCallProcessor {
         bodyElement.setVimUuid(vimUuid);
         bodyElement.setVimCity(wr.getConfig().getCity());
         bodyElement.setVimName(wr.getConfig().getName());
+        bodyElement.setVimType(wr.getConfig().getVimVendor().toString());
         bodyElement.setVimEndpoint(wr.getConfig().getVimEndpoint());
         bodyElement.setCoreTotal(-1);
         bodyElement.setCoreUsed(-1);

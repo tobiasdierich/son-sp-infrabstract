@@ -27,5 +27,5 @@
 package sonata.kernel.vimadaptor.wrapper;
 
 public interface VimVendor {
-
+    public String toString();
 }
