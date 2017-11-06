@@ -50,6 +50,8 @@ import sonata.kernel.vimadaptor.wrapper.WrapperBay;
 import sonata.kernel.vimadaptor.wrapper.WrapperConfiguration;
 import sonata.kernel.vimadaptor.wrapper.WrapperStatusUpdate;
 
+import io.fabric8.kubernetes.api.model.NodeList;
+
 import java.io.IOException;
 import java.util.Random;
 
@@ -68,9 +70,16 @@ public class KubernetesWrapper extends ComputeWrapper {
 
     private String sid;
 
+    /**
+     * Kubernetes related vars
+     */
+    private KubernetesClient client;
+    private NodeList nodes;
+
     public KubernetesWrapper(WrapperConfiguration config) {
         super(config);
         this.r = new Random(System.currentTimeMillis());
+        this.client = new KubernetesClient(config);
     }
 
     /*
@@ -154,18 +163,20 @@ public class KubernetesWrapper extends ComputeWrapper {
 
     @Override
     public ResourceUtilisation getResourceUtilisation() {
+        long start = System.currentTimeMillis();
+        Logger.info("[KubernetesWrapper] Getting resource utilisation...");
 
-        double avgTime = 1769.39;
-        double stdTime = 1096.48;
-        waitGaussianTime(avgTime, stdTime);
+        ResourceUtilisation resourceUtilisation = new ResourceUtilisation();
 
-        ResourceUtilisation resources = new ResourceUtilisation();
-        resources.setTotCores(10);
-        resources.setUsedCores(0);
-        resources.setTotMemory(10000);
-        resources.setUsedMemory(0);
+        try {
+            resourceUtilisation = this.client.getClusterResourceUtilisation(this.getNodes());
 
-        return resources;
+            Logger.info("[KubernetesWrapper] Resource utilisation retrieved in " + (System.currentTimeMillis() - start) + "ms.");
+        } catch (IOException e) {
+            Logger.error("[KubernetesWrapper] Failed to retrieve resource utilisation. Error message: " + e.getMessage());
+        }
+
+        return resourceUtilisation;
     }
 
     /*
@@ -262,4 +273,16 @@ public class KubernetesWrapper extends ComputeWrapper {
         }
     }
 
+    /**
+     * Get all nodes of the Kubernetes cluster.
+     *
+     * @return NodeList
+     */
+    private NodeList getNodes() {
+        if (this.nodes == null) {
+            return this.nodes = this.client.fetchNodes();
+        }
+
+        return this.nodes;
+    }
 }

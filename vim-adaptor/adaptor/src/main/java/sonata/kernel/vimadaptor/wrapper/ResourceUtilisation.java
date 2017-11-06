@@ -39,6 +39,20 @@ public class ResourceUtilisation {
   @JsonProperty("memory_used")
   public int usedMemory;
 
+  public ResourceUtilisation() {
+    this.totCores = 0;
+    this.totMemory = 0;
+    this.usedCores = 0;
+    this.usedMemory = 0;
+  }
+
+  public ResourceUtilisation(int totCores, int totMemory, int usedCores, int usedMemory) {
+    this.totCores = totCores;
+    this.totMemory = totMemory;
+    this.usedCores = usedCores;
+    this.usedMemory = usedMemory;
+  }
+
   public int getTotCores() {
     return totCores;
   }
