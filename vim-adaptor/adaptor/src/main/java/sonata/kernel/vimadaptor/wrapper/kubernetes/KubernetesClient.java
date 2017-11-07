@@ -23,7 +23,7 @@ import java.util.Objects;
 
 public class KubernetesClient {
 
-    private static final String RESOURCE_UTILISATION_ENDPINT = "%s/api/v1/namespaces/kube-system/services/kubernetes-dashboard/proxy/api/v1/node/%s";
+    private static final String RESOURCE_UTILISATION_ENDPOINT = "%s/api/v1/namespaces/kube-system/services/kubernetes-dashboard/proxy/api/v1/node/%s";
 
     private WrapperConfiguration config;
 
@@ -86,7 +86,7 @@ public class KubernetesClient {
      * @return ResourceUtilisation
      */
     public ResourceUtilisation getNodeResourceUtilisation(Node node) throws IOException {
-        JsonNode response = this.makeHttpRequest(String.format(RESOURCE_UTILISATION_ENDPINT, endpoint, node.getMetadata().getName()));
+        JsonNode response = this.makeHttpRequest(String.format(RESOURCE_UTILISATION_ENDPOINT, endpoint, node.getMetadata().getName()));
         JsonNode metrics = response.get("metrics");
 
         int totalMemory = 0;
