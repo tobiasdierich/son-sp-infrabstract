@@ -86,7 +86,7 @@ public class KubernetesClient {
      * @return ResourceUtilisation
      */
     public ResourceUtilisation getNodeResourceUtilisation(Node node) throws IOException {
-        JsonNode response = this.makeHttpRequest(String.format(RESOURCE_UTILISATION_ENDPOINT, endpoint, node.getMetadata().getName()));
+        JsonNode response = this.makeHttpRequest(String.format(RESOURCE_UTILISATION_ENDPOINT, this.endpoint, node.getMetadata().getName()));
         JsonNode metrics = response.get("metrics");
 
         int totalMemory = 0;
