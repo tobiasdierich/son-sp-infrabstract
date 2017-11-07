@@ -18,6 +18,7 @@ import sonata.kernel.vimadaptor.wrapper.ResourceUtilisation;
 import sonata.kernel.vimadaptor.wrapper.WrapperConfiguration;
 
 import java.io.IOException;
+import java.util.Base64;
 import java.util.Objects;
 
 public class KubernetesClient {
@@ -38,7 +39,7 @@ public class KubernetesClient {
 
         this.endpoint = String.format("https://%s", config.getVimEndpoint());
         this.token = config.getAuthPass();
-        this.caCertData = this.getComputeConfigurationValue("cluster_ca_cert");
+        this.caCertData = new String(Base64.getDecoder().decode(this.getComputeConfigurationValue("cluster_ca_cert")));
         this.kubernetesClient = this.getKubernetesClient();
         this.httpClient = HttpClientBuilder.buildClient(this.caCertData);
     }
@@ -174,6 +175,7 @@ public class KubernetesClient {
      * @return DefaultKubernetesClient
      */
     private DefaultKubernetesClient getKubernetesClient() {
+        // TODO: fix withTrustCerts
         Config config = new ConfigBuilder().withMasterUrl(this.endpoint)
                 .withCaCertData(this.caCertData)
                 .withTrustCerts(true)
