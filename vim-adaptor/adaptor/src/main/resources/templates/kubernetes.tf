@@ -2,7 +2,9 @@ provider "kubernetes" {
     host = "{{ endpoint }}"
 
     token = "{{ token }}"
-    cluster_ca_certificate = "{{ caCert }}"
+    cluster_ca_certificate = <<EOF
+{{ caCert }}
+EOF
 }
 
 {% for vdu in csd.getVirtualDeploymentUnits() %}

@@ -36,6 +36,7 @@ import sonata.kernel.vimadaptor.wrapper.WrapperConfiguration;
 import sonata.kernel.vimadaptor.wrapper.WrapperStatusUpdate;
 
 import io.fabric8.kubernetes.api.model.NodeList;
+import sonata.kernel.vimadaptor.wrapper.terraform.TerraformException;
 import sonata.kernel.vimadaptor.wrapper.terraform.TerraformTemplate;
 import sonata.kernel.vimadaptor.wrapper.terraform.TerraformWrapper;
 
@@ -101,6 +102,8 @@ public class KubernetesWrapper extends ComputeWrapper {
                     .writeTemplate(template)
                     .init()
                     .apply();
+        } catch (TerraformException e) {
+            Logger.error(e.getMessage());
         } catch (Exception e) {
             Logger.error("[KubernetesWrapper] Failed to run terraform command: " +  e.getMessage());
         }
