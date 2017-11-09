@@ -9,6 +9,8 @@ public class TerraformWrapper {
 
     private static final org.slf4j.Logger Logger = LoggerFactory.getLogger(TerraformWrapper.class);
 
+    private static final String TERRAFORM_LOCATION = "/root/terraform";
+
     private String baseDir;
 
     private String serviceId;
@@ -23,22 +25,18 @@ public class TerraformWrapper {
      * @param command String
      * @return String
      */
-    public String runCmd(String command) {
+    public String runCmd(String command) throws IOException {
         StringBuilder output = new StringBuilder();
 
-        try {
-            ProcessBuilder builder = new ProcessBuilder("terraform", command).directory(new File(this.getServicePath()));
-            Process process = builder.start();
-            InputStream is = process.getInputStream();
-            InputStreamReader isr = new InputStreamReader(is);
-            BufferedReader br = new BufferedReader(isr);
-            String line;
+        ProcessBuilder builder = new ProcessBuilder(TERRAFORM_LOCATION, command).directory(new File(this.getServicePath()));
+        Process process = builder.start();
+        InputStream is = process.getInputStream();
+        InputStreamReader isr = new InputStreamReader(is);
+        BufferedReader br = new BufferedReader(isr);
+        String line;
 
-            while ((line = br.readLine()) != null) {
-                output.append(line).append('\n');
-            }
-        } catch (Exception e) {
-            Logger.error("[TerraformWrapper] Error while running terraform " + command + ": " + e.getMessage());
+        while ((line = br.readLine()) != null) {
+            output.append(line).append('\n');
         }
 
         return output.toString();
@@ -52,9 +50,13 @@ public class TerraformWrapper {
     public TerraformWrapper init() {
         Logger.info("[TerraformWrapper] Running terraform init...");
 
-        String output = this.runCmd("init");
+        try {
+            String output = this.runCmd("init");
 
-        Logger.info("[TerraformWrapper] terraform init completed. Output: \n" + output);
+            Logger.info("[TerraformWrapper] terraform init completed. Output: \n" + output);
+        } catch (IOException e) {
+            Logger.error("[TerraformWrapper] Error while running terraform init: " + e.getMessage());
+        }
 
         return this;
     }
