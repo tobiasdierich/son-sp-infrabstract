@@ -24,7 +24,8 @@ public class TerraformWrapper {
      * @return this
      */
     public TerraformWrapper writeTemplate(TerraformTemplate template) throws IOException, PebbleException {
-        BufferedWriter writer = new BufferedWriter(new FileWriter(this.getTerraformCongigurationPath()));
+        this.createFoldersIfNotExist();
+        BufferedWriter writer = new BufferedWriter(new FileWriter(this.getTerraformConfigurationPath()));
         writer.write(template.getContent());
 
         return this;
@@ -44,6 +45,15 @@ public class TerraformWrapper {
     }
 
     /**
+     * Create any directories that do not exist.
+     */
+    private void createFoldersIfNotExist() {
+        if (!new File(getServicePath()).isDirectory()) {
+            new File(this.getServicePath()).mkdirs();
+        }
+    }
+
+    /**
      * Get the service path.
      *
      * @return String
@@ -57,7 +67,7 @@ public class TerraformWrapper {
      *
      * @return String
      */
-    private String getTerraformCongigurationPath() {
+    private String getTerraformConfigurationPath() {
         return this.getServicePath() + "service.tf";
     }
 }
