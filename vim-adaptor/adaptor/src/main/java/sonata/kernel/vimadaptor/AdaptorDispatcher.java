@@ -79,6 +79,8 @@ public class AdaptorDispatcher implements Runnable {
           this.handleServiceMsg(message);
         } else if (isFunctionMessage(message)) {
           handleFunctionMessage(message);
+        } else if (isCloudServiceMessage(message)) {
+          handleCloudServiceMessage(message);
         } else if (isMonitoringMessage(message)) {
           this.handleMonitoringMessage(message);
         }
@@ -103,6 +105,12 @@ public class AdaptorDispatcher implements Runnable {
       myThreadPool.execute(new DeployFunctionCallProcessor(message, message.getSid(), mux));
     } else if (message.getTopic().endsWith("scale")) {
       myThreadPool.execute(new ScaleFunctionCallProcessor(message, message.getSid(), mux));
+    }
+  }
+
+  private void handleCloudServiceMessage(ServicePlatformMessage message) {
+    if (message.getTopic().endsWith("deploy")) {
+      myThreadPool.execute(new DeployCloudServiceProcessor(message, message.getSid(), mux));
     }
   }
 
@@ -171,6 +179,10 @@ public class AdaptorDispatcher implements Runnable {
 
   private boolean isFunctionMessage(ServicePlatformMessage message) {
     return message.getTopic().contains("infrastructure.function");
+  }
+
+  private boolean isCloudServiceMessage(ServicePlatformMessage message) {
+    return message.getTopic().contains("infrastructure.cloud_service");
   }
 
   private boolean isManagementMsg(ServicePlatformMessage message) {
