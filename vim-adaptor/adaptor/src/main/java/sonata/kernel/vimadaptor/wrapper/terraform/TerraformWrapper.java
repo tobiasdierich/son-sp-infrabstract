@@ -26,11 +26,12 @@ public class TerraformWrapper {
      * @param command String
      * @return String
      */
-    public String runCmd(String command) throws IOException {
+    public String runCmd(String command) throws IOException, InterruptedException, TerraformException {
         StringBuilder output = new StringBuilder();
 
         ProcessBuilder builder = new ProcessBuilder(TERRAFORM_LOCATION, command)
-                .directory(new File(this.getServicePath()));
+                .directory(new File(this.getServicePath()))
+                .redirectErrorStream(true);
 
         Map<String, String> env = builder.environment();
         env.put("HOME", "/root");
@@ -45,6 +46,14 @@ public class TerraformWrapper {
             output.append(line).append('\n');
         }
 
+        int exitCode = process.waitFor();
+
+        if (exitCode > 0) {
+            String err = "[TerraformWrapper] Error while running terraform " + command + ": " + output;
+
+            throw new TerraformException(err);
+        }
+
         return output.toString();
     }
 
@@ -53,16 +62,12 @@ public class TerraformWrapper {
      *
      * @return this
      */
-    public TerraformWrapper init() {
+    public TerraformWrapper init() throws IOException, TerraformException, InterruptedException {
         Logger.info("[TerraformWrapper] Running terraform init...");
 
-        try {
-            this.runCmd("init");
+        this.runCmd("init");
 
-            Logger.info("[TerraformWrapper] terraform init completed.");
-        } catch (IOException e) {
-            Logger.error("[TerraformWrapper] Error while running terraform init: " + e.getMessage());
-        }
+        Logger.info("[TerraformWrapper] terraform init completed.");
 
         return this;
     }
@@ -72,16 +77,12 @@ public class TerraformWrapper {
      *
      * @return this
      */
-    public TerraformWrapper apply() {
+    public TerraformWrapper apply() throws IOException, TerraformException, InterruptedException {
         Logger.info("[TerraformWrapper] Running terraform apply...");
 
-        try {
-            String output = this.runCmd("apply");
+        this.runCmd("apply");
 
-            Logger.info("[TerraformWrapper] terraform apply completed. Output: \n" + output);
-        } catch (IOException e) {
-            Logger.error("[TerraformWrapper] Error while running terraform apply: " + e.getMessage());
-        }
+        Logger.info("[TerraformWrapper] terraform apply completed.");
 
         return this;
     }
