@@ -9,15 +9,10 @@ terraform_url=$(curl https://releases.hashicorp.com/index.json | jq '{terraform}
 # Download Terraform. URI: https://www.terraform.io/downloads.html
 echo "Downloading $terraform_url."
 curl -o terraform.zip $terraform_url
+
 # Unzip and install
 unzip terraform.zip
 rm terraform.zip
 
-echo '
-# Terraform Path.
-export PATH=/root/terraform:$PATH
-' >>~/.bashrc
-
-source ~/.bashrc
-
+# Enable plugin cache
 echo 'plugin_cache_dir   = "/root/.terraform.d/plugin-cache"' >> ~/.terraformrc

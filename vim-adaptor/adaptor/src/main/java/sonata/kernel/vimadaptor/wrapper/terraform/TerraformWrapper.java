@@ -4,6 +4,7 @@ import com.mitchellbosecke.pebble.error.PebbleException;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.Map;
 
 public class TerraformWrapper {
 
@@ -28,7 +29,12 @@ public class TerraformWrapper {
     public String runCmd(String command) throws IOException {
         StringBuilder output = new StringBuilder();
 
-        ProcessBuilder builder = new ProcessBuilder(TERRAFORM_LOCATION, command).directory(new File(this.getServicePath()));
+        ProcessBuilder builder = new ProcessBuilder(TERRAFORM_LOCATION, command)
+                .directory(new File(this.getServicePath()));
+
+        Map<String, String> env = builder.environment();
+        env.put("HOME", "/root");
+
         Process process = builder.start();
         InputStream is = process.getInputStream();
         InputStreamReader isr = new InputStreamReader(is);
