@@ -21,6 +21,12 @@ abstract public class TerraformTemplate {
         return this.content;
     }
 
+    public TerraformTemplate build() throws IOException, PebbleException {
+        this.content = this.buildContent();
+
+        return this;
+    }
+
     abstract public String getBaseTemplate();
 
     abstract public Map<String, Object> getContext();

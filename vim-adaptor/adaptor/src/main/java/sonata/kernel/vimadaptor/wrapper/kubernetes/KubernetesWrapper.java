@@ -45,6 +45,8 @@ import sonata.kernel.vimadaptor.wrapper.WrapperConfiguration;
 import sonata.kernel.vimadaptor.wrapper.WrapperStatusUpdate;
 
 import io.fabric8.kubernetes.api.model.NodeList;
+import sonata.kernel.vimadaptor.wrapper.terraform.TerraformTemplate;
+import sonata.kernel.vimadaptor.wrapper.terraform.TerraformWrapper;
 
 import java.io.IOException;
 import java.util.Random;
@@ -60,9 +62,12 @@ public class KubernetesWrapper extends ComputeWrapper {
      */
     @SuppressWarnings("unused")
     private ServiceDeployPayload data;
+
     private Random r;
 
     private String sid;
+
+    private TerraformWrapper terraform;
 
     /**
      * Kubernetes related vars
@@ -74,6 +79,7 @@ public class KubernetesWrapper extends ComputeWrapper {
         super(config);
         this.r = new Random(System.currentTimeMillis());
         this.client = new KubernetesClient(config);
+        this.terraform = new TerraformWrapper("/root/terraform_data/");
     }
 
     /*
@@ -92,14 +98,25 @@ public class KubernetesWrapper extends ComputeWrapper {
     public void deployCloudService(CloudServiceDeployPayload data, String sid) {
         Logger.info("[KubernetesWrapper] Received deploy cloud service call.");
 
-        KubernetesTerraformTemplate template = new KubernetesTerraformTemplate(data.getCsd(), this.getConfig());
+        TerraformTemplate template = null;
+        Logger.info("[KubernetesWrapper] Building Kubernetes template.");
+        try {
+            template = new KubernetesTerraformTemplate()
+                    .withCsd(data.getCsd())
+                    .withWrapperConfiguration(this.getConfig())
+                    .build();
+        } catch (Exception e) {
+            Logger.error("[KubernetesWrapper] Failed to build Kubernetes template: " + e.getMessage());
+        }
+
+        Logger.info("[KubernetesWrapper] Building Kubernetes template successful.");
+        Logger.info("[KubernetesWrapper] Triggering terraform deployment.");
 
         try {
-            Logger.info("[KubernetesWrapper] Template for cloud service:");
-            Logger.info(template.getContent());
+            this.terraform.forService(sid)
+                    .writeTemplate(template);
         } catch (Exception e) {
-            Logger.error("[KubernetesWrapper] Failed to build template.");
-            e.printStackTrace();
+            Logger.error("[KubernetesWrapper] Failed to run terraform command: " +  e.getMessage());
         }
     }
 

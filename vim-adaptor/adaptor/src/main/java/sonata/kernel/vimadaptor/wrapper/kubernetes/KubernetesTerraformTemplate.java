@@ -13,11 +13,6 @@ public class KubernetesTerraformTemplate extends TerraformTemplate {
 
     private WrapperConfiguration wrapper;
 
-    public KubernetesTerraformTemplate(CsDescriptor csd, WrapperConfiguration wrapper) {
-        this.csd = csd;
-        this.wrapper = wrapper;
-    }
-
     @Override
     public String getBaseTemplate() {
         return "templates/kubernetes.tf";
@@ -30,5 +25,17 @@ public class KubernetesTerraformTemplate extends TerraformTemplate {
         context.put("endpoint", String.format("https://%s", wrapper.getVimEndpoint()));
 
         return context;
+    }
+
+    public KubernetesTerraformTemplate withCsd(CsDescriptor csd) {
+        this.csd = csd;
+
+        return this;
+    }
+
+    public KubernetesTerraformTemplate withWrapperConfiguration(WrapperConfiguration wrapper) {
+        this.wrapper = wrapper;
+
+        return this;
     }
 }
