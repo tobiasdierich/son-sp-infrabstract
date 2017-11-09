@@ -3,10 +3,7 @@ package sonata.kernel.vimadaptor.wrapper.terraform;
 import com.mitchellbosecke.pebble.error.PebbleException;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 
 public class TerraformWrapper {
 
@@ -18,6 +15,48 @@ public class TerraformWrapper {
 
     public TerraformWrapper(String baseDir) {
         this.baseDir = baseDir;
+    }
+
+    /**
+     * Run the given terraform command.
+     *
+     * @param command String
+     * @return String
+     */
+    public String runCmd(String command) {
+        StringBuilder output = new StringBuilder();
+
+        try {
+            ProcessBuilder builder = new ProcessBuilder("terraform", command).directory(new File(this.getServicePath()));
+            Process process = builder.start();
+            InputStream is = process.getInputStream();
+            InputStreamReader isr = new InputStreamReader(is);
+            BufferedReader br = new BufferedReader(isr);
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                output.append(line).append('\n');
+            }
+        } catch (Exception e) {
+            Logger.error("[TerraformWrapper] Error while running terraform " + command + ": " + e.getMessage());
+        }
+
+        return output.toString();
+    }
+
+    /**
+     * Run "terraform init".
+     *
+     * @return this
+     */
+    public TerraformWrapper init() {
+        Logger.info("[TerraformWrapper] Running terraform init...");
+
+        String output = this.runCmd("init");
+
+        Logger.info("[TerraformWrapper] terraform init completed. Output: \n" + output);
+
+        return this;
     }
 
     /**
@@ -34,9 +73,6 @@ public class TerraformWrapper {
         BufferedWriter writer = new BufferedWriter(new FileWriter(this.getTerraformConfigurationPath()));
         writer.write(template.getContent());
         writer.close();
-
-        Logger.info("[TerraformWrapper] Wrote terraform config. Content:");
-        Logger.info(template.getContent());
 
         return this;
     }

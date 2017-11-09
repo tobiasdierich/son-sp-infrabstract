@@ -114,7 +114,8 @@ public class KubernetesWrapper extends ComputeWrapper {
 
         try {
             this.terraform.forService(sid)
-                    .writeTemplate(template);
+                    .writeTemplate(template)
+                    .init();
         } catch (Exception e) {
             Logger.error("[KubernetesWrapper] Failed to run terraform command: " +  e.getMessage());
         }
