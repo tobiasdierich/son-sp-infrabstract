@@ -34,14 +34,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import org.slf4j.LoggerFactory;
 
-import sonata.kernel.vimadaptor.commons.FunctionDeployPayload;
-import sonata.kernel.vimadaptor.commons.FunctionDeployResponse;
-import sonata.kernel.vimadaptor.commons.FunctionScalePayload;
-import sonata.kernel.vimadaptor.commons.ServiceDeployPayload;
-import sonata.kernel.vimadaptor.commons.Status;
-import sonata.kernel.vimadaptor.commons.VduRecord;
-import sonata.kernel.vimadaptor.commons.VnfImage;
-import sonata.kernel.vimadaptor.commons.VnfRecord;
+import sonata.kernel.vimadaptor.commons.*;
 import sonata.kernel.vimadaptor.commons.vnfd.VirtualDeploymentUnit;
 import sonata.kernel.vimadaptor.commons.vnfd.VnfDescriptor;
 import sonata.kernel.vimadaptor.wrapper.ComputeWrapper;
@@ -134,6 +127,11 @@ public class ComputeMockWrapper extends ComputeWrapper {
       data.getServiceInstanceId(), this.getConfig().getUuid());
     Logger.debug("[MockWrapper] All done!");
 
+  }
+
+  @Override
+  public void deployCloudService(CloudServiceDeployPayload data, String sid) {
+    Logger.error("[MockWrapper] Received deploy cloud service call. Ignoring.");
   }
 
   @Deprecated

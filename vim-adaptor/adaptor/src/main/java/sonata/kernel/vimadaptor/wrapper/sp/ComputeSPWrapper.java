@@ -26,10 +26,7 @@
 
 package sonata.kernel.vimadaptor.wrapper.sp;
 
-import sonata.kernel.vimadaptor.commons.FunctionDeployPayload;
-import sonata.kernel.vimadaptor.commons.FunctionScalePayload;
-import sonata.kernel.vimadaptor.commons.ServiceDeployPayload;
-import sonata.kernel.vimadaptor.commons.VnfImage;
+import sonata.kernel.vimadaptor.commons.*;
 import sonata.kernel.vimadaptor.wrapper.ComputeWrapper;
 import sonata.kernel.vimadaptor.wrapper.ResourceUtilisation;
 import sonata.kernel.vimadaptor.wrapper.WrapperConfiguration;
@@ -57,6 +54,11 @@ public class ComputeSPWrapper extends ComputeWrapper {
     // - sending a REST call to the underlying SP Gatekeeper
     // - than poll the GK until the status is "READY" or "ERROR"
 
+  }
+
+  @Override
+  public void deployCloudService(CloudServiceDeployPayload data, String sid) {
+    // TODO Implement this function
   }
 
   /*

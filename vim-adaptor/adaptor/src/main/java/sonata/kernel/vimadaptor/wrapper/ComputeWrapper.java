@@ -26,10 +26,7 @@
 
 package sonata.kernel.vimadaptor.wrapper;
 
-import sonata.kernel.vimadaptor.commons.FunctionDeployPayload;
-import sonata.kernel.vimadaptor.commons.FunctionScalePayload;
-import sonata.kernel.vimadaptor.commons.ServiceDeployPayload;
-import sonata.kernel.vimadaptor.commons.VnfImage;
+import sonata.kernel.vimadaptor.commons.*;
 
 import java.io.IOException;
 
@@ -56,6 +53,14 @@ public abstract class ComputeWrapper extends AbstractWrapper implements Wrapper 
    * @param sid the session ID for this Adaptor call.
    */
   public abstract void deployFunction(FunctionDeployPayload data, String sid);
+
+  /**
+   * Deploy a the CS described in the payload in this compute VIM.
+   *
+   * @param data the payload of a CloudService.Deploy call
+   * @param sid the session ID for this Adaptor call.
+   */
+  public abstract void deployCloudService(CloudServiceDeployPayload data, String sid);
 
   /**
    * Deploy a service instance on this VIM.

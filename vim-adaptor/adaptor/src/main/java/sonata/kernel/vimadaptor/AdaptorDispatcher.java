@@ -116,7 +116,7 @@ public class AdaptorDispatcher implements Runnable {
 
   private void handleManagementMessage(ServicePlatformMessage message) {
 
-    if (message.getTopic().contains("compute")) { // compute menagement API
+    if (message.getTopic().contains("compute")) { // compute management API
       if (message.getTopic().endsWith("add")) {
         myThreadPool.execute(new AddVimCallProcessor(message, message.getSid(), mux));
       } else if (message.getTopic().endsWith("remove")) {

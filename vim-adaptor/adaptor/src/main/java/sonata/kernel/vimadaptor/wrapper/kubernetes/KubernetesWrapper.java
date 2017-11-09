@@ -34,14 +34,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import org.slf4j.LoggerFactory;
 
-import sonata.kernel.vimadaptor.commons.FunctionDeployPayload;
-import sonata.kernel.vimadaptor.commons.FunctionDeployResponse;
-import sonata.kernel.vimadaptor.commons.FunctionScalePayload;
-import sonata.kernel.vimadaptor.commons.ServiceDeployPayload;
-import sonata.kernel.vimadaptor.commons.Status;
-import sonata.kernel.vimadaptor.commons.VduRecord;
-import sonata.kernel.vimadaptor.commons.VnfImage;
-import sonata.kernel.vimadaptor.commons.VnfRecord;
+import sonata.kernel.vimadaptor.commons.*;
 import sonata.kernel.vimadaptor.commons.vnfd.VirtualDeploymentUnit;
 import sonata.kernel.vimadaptor.commons.vnfd.VnfDescriptor;
 import sonata.kernel.vimadaptor.wrapper.ComputeWrapper;
@@ -91,73 +84,17 @@ public class KubernetesWrapper extends ComputeWrapper {
      */
     @Override
     public void deployFunction(FunctionDeployPayload data, String sid) {
-        double avgTime = 51987.21;
-        double stdTime = 14907.12;
-        Logger.debug("[KubernetesWrapper] deploying function...");
-        waitGaussianTime(avgTime, stdTime);
-        Logger.debug("[KubernetesWrapper] function deployed. Generating response...");
-        VnfDescriptor vnf = data.getVnfd();
-        VnfRecord vnfr = new VnfRecord();
-        vnfr.setDescriptorVersion("vnfr-schema-01");
-        vnfr.setStatus(Status.normal_operation);
-        vnfr.setDescriptorReference(vnf.getUuid());
-        // vnfr.setDescriptorReferenceName(vnf.getName());
-        // vnfr.setDescriptorReferenceVendor(vnf.getVendor());
-        // vnfr.setDescriptorReferenceVersion(vnf.getVersion());
+        Logger.error("[KubernetesWrapper] Received deploy function call. Ignoring.");
+    }
 
-        vnfr.setId(vnf.getInstanceUuid());
-        for (VirtualDeploymentUnit vdu : vnf.getVirtualDeploymentUnits()) {
-            VduRecord vdur = new VduRecord();
-            vdur.setId(vdu.getId());
-            vdur.setNumberOfInstances(1);
-            vdur.setVduReference(vnf.getName() + ":" + vdu.getId());
-            vdur.setVmImage(vdu.getVmImage());
-            vnfr.addVdu(vdur);
-        }
-        FunctionDeployResponse response = new FunctionDeployResponse();
-        response.setRequestStatus("COMPLETED");
-        response.setInstanceVimUuid("Stack-" + vnf.getInstanceUuid());
-        response.setInstanceName("Stack-" + vnf.getInstanceUuid());
-        response.setVimUuid(this.getConfig().getUuid());
-        response.setMessage("");
-        response.setVnfr(vnfr);
-        Logger.info("Response created. Serializing...");
-
-        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-        mapper.disable(SerializationFeature.WRITE_EMPTY_JSON_ARRAYS);
-        mapper.enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING);
-        mapper.disable(SerializationFeature.WRITE_NULL_MAP_VALUES);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-        String body;
-        try {
-            body = mapper.writeValueAsString(response);
-            this.setChanged();
-            Logger.info("Serialized. notifying call processor");
-            WrapperStatusUpdate update = new WrapperStatusUpdate(sid, "SUCCESS", body);
-            this.notifyObservers(update);
-        } catch (JsonProcessingException e) {
-            Logger.error(e.getMessage(), e);
-        }
-        Logger.debug("[KubernetesWrapper] Response generated. Writing record in the Infr. Repos...");
-        WrapperBay.getInstance().getVimRepo().writeFunctionInstanceEntry(vnf.getInstanceUuid(),
-                data.getServiceInstanceId(), this.getConfig().getUuid());
-        Logger.debug("[KubernetesWrapper] All done!");
-
+    @Override
+    public void deployCloudService(CloudServiceDeployPayload data, String sid) {
+        Logger.error("[KubernetesWrapper] Received deploy cloud service call.");
     }
 
     @Deprecated
     @Override
     public boolean deployService(ServiceDeployPayload data, String callSid) {
-        this.data = data;
-        this.sid = callSid;
-        // This is a mock compute wrapper.
-
-    /*
-     * Just use the SD to forge the response message for the SLM with a success. In general Wrappers
-     * would need a complex set of actions to deploy the service, so this function should just check
-     * if the request is acceptable, and if so start a new thread to deal with the perform the
-     * needed actions.
-     */
         return false;
     }
 

@@ -30,7 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.slf4j.LoggerFactory;
 
-import sonata.kernel.vimadaptor.commons.FunctionDeployPayload;
+import sonata.kernel.vimadaptor.commons.CloudServiceDeployPayload;
 import sonata.kernel.vimadaptor.commons.SonataManifestMapper;
 import sonata.kernel.vimadaptor.messaging.ServicePlatformMessage;
 import sonata.kernel.vimadaptor.wrapper.ComputeWrapper;
@@ -41,8 +41,9 @@ import java.util.Observable;
 
 public class DeployCloudServiceProcessor extends AbstractCallProcessor {
 
-    private static final org.slf4j.Logger Logger =
-            LoggerFactory.getLogger(DeployCloudServiceProcessor.class);
+    private static final org.slf4j.Logger Logger = LoggerFactory.getLogger(DeployCloudServiceProcessor.class);
+
+    private CloudServiceDeployPayload data;
 
     /**
      * Basic constructor for the call processor.
@@ -63,7 +64,39 @@ public class DeployCloudServiceProcessor extends AbstractCallProcessor {
      */
     @Override
     public boolean process(ServicePlatformMessage message) {
-        Logger.info("[DeployCloudServiceProcessor] Starting deployment.");
+        Logger.info("Deploy cloud service call received by call processor.");
+
+        // parse the payload to get Wrapper UUID and COSD/CSD from the request body
+        data = null;
+        ObjectMapper mapper = SonataManifestMapper.getSonataMapper();
+
+        try {
+            data = mapper.readValue(message.getBody(), CloudServiceDeployPayload.class);
+            Logger.info("Payload parsed");
+            ComputeWrapper wr = WrapperBay.getInstance().getComputeWrapper(data.getVimUuid());
+            Logger.info("Wrapper retrieved: " + wr.getConfig().getUuid());
+
+            if (wr == null) {
+                Logger.warn("Error retrieving the wrapper");
+
+                this.sendToMux(new ServicePlatformMessage(
+                        "{\"request_status\":\"ERROR\",\"message\":\"VIM not found\"}", "application/json",
+                        message.getReplyTo(), message.getSid(), null));
+                return false;
+            } else {
+                // use wrapper interface to send the NSD/VNFD, along with meta-data
+                // to the wrapper, triggering the service instantiation.
+                Logger.info("Calling wrapper: " + wr.getConfig().getName() + "- UUID: " +wr.getConfig().getUuid());
+                wr.addObserver(this);
+                wr.deployCloudService(data, this.getSid());
+            }
+        } catch (Exception e) {
+            Logger.error("Error deploying the system: " + e.getMessage(), e);
+            this.sendToMux(new ServicePlatformMessage(
+                    "{\"request_status\":\"ERROR\",\"message\":\"Deployment Error\"}", "application/json",
+                    message.getReplyTo(), message.getSid(), null));
+            return false;
+        }
 
         return true;
     }
