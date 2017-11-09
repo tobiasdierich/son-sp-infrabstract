@@ -32,6 +32,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
+import com.mitchellbosecke.pebble.error.PebbleException;
 import org.slf4j.LoggerFactory;
 
 import sonata.kernel.vimadaptor.commons.*;
@@ -89,7 +90,17 @@ public class KubernetesWrapper extends ComputeWrapper {
 
     @Override
     public void deployCloudService(CloudServiceDeployPayload data, String sid) {
-        Logger.error("[KubernetesWrapper] Received deploy cloud service call.");
+        Logger.info("[KubernetesWrapper] Received deploy cloud service call.");
+
+        KubernetesTerraformTemplate template = new KubernetesTerraformTemplate(data.getCsd(), this.getConfig());
+
+        try {
+            Logger.info("[KubernetesWrapper] Template for cloud service:");
+            Logger.info(template.getContent());
+        } catch (Exception e) {
+            Logger.error("[KubernetesWrapper] Failed to build template.");
+            e.printStackTrace();
+        }
     }
 
     @Deprecated
