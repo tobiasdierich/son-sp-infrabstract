@@ -26,18 +26,9 @@
 
 package sonata.kernel.vimadaptor.wrapper.kubernetes;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-
-import com.mitchellbosecke.pebble.error.PebbleException;
 import org.slf4j.LoggerFactory;
 
 import sonata.kernel.vimadaptor.commons.*;
-import sonata.kernel.vimadaptor.commons.vnfd.VirtualDeploymentUnit;
-import sonata.kernel.vimadaptor.commons.vnfd.VnfDescriptor;
 import sonata.kernel.vimadaptor.wrapper.ComputeWrapper;
 import sonata.kernel.vimadaptor.wrapper.ResourceUtilisation;
 import sonata.kernel.vimadaptor.wrapper.WrapperBay;
@@ -55,13 +46,6 @@ import java.util.Random;
 public class KubernetesWrapper extends ComputeWrapper {
 
     private static final org.slf4j.Logger Logger = LoggerFactory.getLogger(KubernetesWrapper.class);
-    /*
-     * Utility fields to implement the mock response creation. A real wrapper should instantiate a
-     * suitable object with these fields, able to handle the API call asynchronously, generate a
-     * response and update the observer
-     */
-    @SuppressWarnings("unused")
-    private ServiceDeployPayload data;
 
     private Random r;
 
@@ -115,7 +99,8 @@ public class KubernetesWrapper extends ComputeWrapper {
         try {
             this.terraform.forService(sid)
                     .writeTemplate(template)
-                    .init();
+                    .init()
+                    .apply();
         } catch (Exception e) {
             Logger.error("[KubernetesWrapper] Failed to run terraform command: " +  e.getMessage());
         }

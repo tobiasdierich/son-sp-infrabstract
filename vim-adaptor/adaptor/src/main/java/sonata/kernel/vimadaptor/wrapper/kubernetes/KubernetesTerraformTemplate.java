@@ -1,9 +1,12 @@
 package sonata.kernel.vimadaptor.wrapper.kubernetes;
 
+import org.json.JSONObject;
+import org.json.JSONTokener;
 import sonata.kernel.vimadaptor.commons.csd.CsDescriptor;
 import sonata.kernel.vimadaptor.wrapper.WrapperConfiguration;
 import sonata.kernel.vimadaptor.wrapper.terraform.TerraformTemplate;
 
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,6 +26,8 @@ public class KubernetesTerraformTemplate extends TerraformTemplate {
         Map<String, Object> context = new HashMap<>();
         context.put("csd", this.csd);
         context.put("endpoint", String.format("https://%s", wrapper.getVimEndpoint()));
+        context.put("token", wrapper.getAuthPass());
+        context.put("caCert", new String(Base64.getDecoder().decode(this.getComputeConfigurationValue("cluster_ca_cert"))));
 
         return context;
     }
@@ -37,5 +42,19 @@ public class KubernetesTerraformTemplate extends TerraformTemplate {
         this.wrapper = wrapper;
 
         return this;
+    }
+
+    /**
+     * Get a value from the dynamic compute configuration of the wrapper config.
+     *
+     * @param key String
+     *
+     * @return String
+     */
+    private String getComputeConfigurationValue(String key) {
+        JSONTokener tokener = new JSONTokener(this.wrapper.getConfiguration());
+        JSONObject object = (JSONObject) tokener.nextValue();
+
+        return object.getString(key);
     }
 }

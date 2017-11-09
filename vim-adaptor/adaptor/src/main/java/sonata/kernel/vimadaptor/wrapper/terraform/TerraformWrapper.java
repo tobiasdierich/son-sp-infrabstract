@@ -57,11 +57,30 @@ public class TerraformWrapper {
         Logger.info("[TerraformWrapper] Running terraform init...");
 
         try {
-            String output = this.runCmd("init");
+            this.runCmd("init");
 
-            Logger.info("[TerraformWrapper] terraform init completed. Output: \n" + output);
+            Logger.info("[TerraformWrapper] terraform init completed.");
         } catch (IOException e) {
             Logger.error("[TerraformWrapper] Error while running terraform init: " + e.getMessage());
+        }
+
+        return this;
+    }
+
+    /**
+     * Run "terraform apply".
+     *
+     * @return this
+     */
+    public TerraformWrapper apply() {
+        Logger.info("[TerraformWrapper] Running terraform apply...");
+
+        try {
+            String output = this.runCmd("apply");
+
+            Logger.info("[TerraformWrapper] terraform apply completed. Output: \n" + output);
+        } catch (IOException e) {
+            Logger.error("[TerraformWrapper] Error while running terraform apply: " + e.getMessage());
         }
 
         return this;
