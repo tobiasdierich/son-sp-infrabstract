@@ -26,11 +26,18 @@ public class TerraformWrapper {
      * @param command String
      * @return String
      */
-    public String runCmd(String command) throws IOException, InterruptedException, TerraformException {
+    public String runCmd(String command, boolean autoApprove) throws IOException, InterruptedException, TerraformException {
         StringBuilder output = new StringBuilder();
 
-        ProcessBuilder builder = new ProcessBuilder(TERRAFORM_LOCATION, command)
-                .directory(new File(this.getServicePath()))
+        ProcessBuilder builder;
+
+        if (autoApprove) {
+            builder = new ProcessBuilder(TERRAFORM_LOCATION, command, "-auto-approve=true");
+        } else {
+            builder = new ProcessBuilder(TERRAFORM_LOCATION, command);
+        }
+
+        builder = builder.directory(new File(this.getServicePath()))
                 .redirectErrorStream(true);
 
         Map<String, String> env = builder.environment();
@@ -65,7 +72,7 @@ public class TerraformWrapper {
     public TerraformWrapper init() throws IOException, TerraformException, InterruptedException {
         Logger.info("[TerraformWrapper] Running terraform init...");
 
-        this.runCmd("init");
+        this.runCmd("init", false);
 
         Logger.info("[TerraformWrapper] terraform init completed.");
 
@@ -80,7 +87,7 @@ public class TerraformWrapper {
     public TerraformWrapper apply() throws IOException, TerraformException, InterruptedException {
         Logger.info("[TerraformWrapper] Running terraform apply...");
 
-        this.runCmd("apply");
+        this.runCmd("apply", true);
 
         Logger.info("[TerraformWrapper] terraform apply completed.");
 

@@ -107,6 +107,8 @@ public class KubernetesWrapper extends ComputeWrapper {
         } catch (Exception e) {
             Logger.error("[KubernetesWrapper] Failed to run terraform command: " +  e.getMessage());
         }
+
+        Logger.info("[KubernetesWrapper] Successfully deployed cloud service.");
     }
 
     @Deprecated
