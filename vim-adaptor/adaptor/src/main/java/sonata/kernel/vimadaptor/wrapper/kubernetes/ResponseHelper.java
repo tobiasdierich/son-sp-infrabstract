@@ -54,6 +54,8 @@ public class ResponseHelper {
             csr.addVdu(vdur);
         }
 
+        response.setCsr(csr);
+
         return response;
     }
 
