@@ -26,6 +26,7 @@
 
 package sonata.kernel.vimadaptor.wrapper.kubernetes;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.LoggerFactory;
 
 import sonata.kernel.vimadaptor.commons.*;
@@ -54,6 +55,8 @@ public class KubernetesWrapper extends ComputeWrapper {
 
     private TerraformWrapper terraform;
 
+    private ResponseHelper response;
+
     /**
      * Kubernetes related vars
      */
@@ -65,6 +68,7 @@ public class KubernetesWrapper extends ComputeWrapper {
         this.r = new Random(System.currentTimeMillis());
         this.client = new KubernetesClient(config);
         this.terraform = new TerraformWrapper("/root/terraform_data/");
+        this.response = new ResponseHelper(config);
     }
 
     /*
@@ -80,18 +84,21 @@ public class KubernetesWrapper extends ComputeWrapper {
     }
 
     @Override
-    public void deployCloudService(CloudServiceDeployPayload data, String sid) {
+    public void deployCloudService(CloudServiceDeployPayload deployPayload, String sid) {
         Logger.info("[KubernetesWrapper] Received deploy cloud service call.");
 
         TerraformTemplate template = null;
         Logger.info("[KubernetesWrapper] Building Kubernetes template.");
         try {
             template = new KubernetesTerraformTemplate()
-                    .withCsd(data.getCsd())
+                    .withCsd(deployPayload.getCsd())
                     .withWrapperConfiguration(this.getConfig())
                     .build();
         } catch (Exception e) {
             Logger.error("[KubernetesWrapper] Failed to build Kubernetes template: " + e.getMessage());
+            this.notifyDeploymentFailed(sid, "Failed to build Kubernetes template: " + e.getMessage());
+
+            return;
         }
 
         Logger.info("[KubernetesWrapper] Building Kubernetes template successful.");
@@ -104,11 +111,55 @@ public class KubernetesWrapper extends ComputeWrapper {
                     .apply();
         } catch (TerraformException e) {
             Logger.error(e.getMessage());
+            this.notifyDeploymentFailed(sid, e.getMessage());
+
+            return;
         } catch (Exception e) {
             Logger.error("[KubernetesWrapper] Failed to run terraform command: " +  e.getMessage());
+            this.notifyDeploymentFailed(sid, "Failed to run terraform command: " +  e.getMessage());
+
+            return;
         }
 
         Logger.info("[KubernetesWrapper] Successfully deployed cloud service.");
+
+        this.notifyDeploymentSuccessful(sid, deployPayload);
+    }
+
+    /**
+     * Notify observers that the deployment was successful.
+     */
+    private void notifyDeploymentSuccessful(String sid, CloudServiceDeployPayload deployPayload) {
+        CloudServiceDeployResponse response = this.response.buildDeployResponse(sid, deployPayload);
+
+        try {
+            String yaml = this.response.transformToYAML(response);
+            WrapperStatusUpdate update = new WrapperStatusUpdate(sid, "SUCCESS", yaml);
+
+            this.notifyUpdate(update);
+        } catch (JsonProcessingException e) {
+            this.notifyDeploymentFailed(sid, "Exception while sending deployment successful message.");
+        }
+    }
+
+    /**
+     * Notify observers that the deployment failed.
+     *
+     * @param error String
+     */
+    private void notifyDeploymentFailed(String sid, String error) {
+        WrapperStatusUpdate update = new WrapperStatusUpdate(sid, "ERROR", error);
+        this.notifyUpdate(update);
+    }
+
+    /**
+     * Propagate status update to observers.
+     *
+     * @param update WrapperStatusUpdate
+     */
+    private void notifyUpdate(WrapperStatusUpdate update) {
+        this.markAsChanged();
+        this.notifyObservers(update);
     }
 
     @Deprecated

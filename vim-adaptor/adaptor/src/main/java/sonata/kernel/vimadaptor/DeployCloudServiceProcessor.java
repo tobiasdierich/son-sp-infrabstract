@@ -108,6 +108,9 @@ public class DeployCloudServiceProcessor extends AbstractCallProcessor {
      */
     @Override
     public void update(Observable o, Object arg) {
-        Logger.info("[DeployCloudServiceProcessor] Update received.");
+        Logger.info("[DeployCloudServiceProcessor] Wrapper update received.");
+
+        WrapperStatusUpdate update = (WrapperStatusUpdate) arg;
+        Logger.info(update.getBody());
     }
 }

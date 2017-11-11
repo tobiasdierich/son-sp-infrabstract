@@ -6,6 +6,8 @@ import java.util.ArrayList;
 
 public class CsDescriptor {
 
+    private String uuid;
+
     @JsonProperty("descriptor_version")
     private String descriptorVersion;
 
@@ -18,6 +20,9 @@ public class CsDescriptor {
     private String author;
 
     private String description;
+
+    @JsonProperty("instance_uuid")
+    private String instanceUuid;
 
     @JsonProperty("virtual_deployment_units")
     private ArrayList<VirtualDeploymentUnit> virtualDeploymentUnits;
@@ -76,5 +81,21 @@ public class CsDescriptor {
 
     public void setVirtualDeploymentUnits(ArrayList<VirtualDeploymentUnit> virtualDeploymentUnits) {
         this.virtualDeploymentUnits = virtualDeploymentUnits;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
+    public String getInstanceUuid() {
+        return instanceUuid;
+    }
+
+    public void setInstanceUuid(String instanceUuid) {
+        this.instanceUuid = instanceUuid;
     }
 }
