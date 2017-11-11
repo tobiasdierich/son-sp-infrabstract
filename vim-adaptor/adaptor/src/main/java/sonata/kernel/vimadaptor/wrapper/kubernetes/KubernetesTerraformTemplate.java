@@ -16,6 +16,8 @@ public class KubernetesTerraformTemplate extends TerraformTemplate {
 
     private WrapperConfiguration wrapper;
 
+    private String serviceId;
+
     @Override
     public String getBaseTemplate() {
         return "templates/kubernetes.tf";
@@ -24,6 +26,7 @@ public class KubernetesTerraformTemplate extends TerraformTemplate {
     @Override
     public Map<String, Object> getContext() {
         Map<String, Object> context = new HashMap<>();
+        context.put("serviceId", this.serviceId);
         context.put("csd", this.csd);
         context.put("endpoint", String.format("https://%s", wrapper.getVimEndpoint()));
         context.put("token", wrapper.getAuthPass());
@@ -40,6 +43,12 @@ public class KubernetesTerraformTemplate extends TerraformTemplate {
 
     public KubernetesTerraformTemplate withWrapperConfiguration(WrapperConfiguration wrapper) {
         this.wrapper = wrapper;
+
+        return this;
+    }
+
+    public KubernetesTerraformTemplate forService(String serviceId) {
+        this.serviceId = serviceId;
 
         return this;
     }

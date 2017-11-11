@@ -91,12 +91,13 @@ public class KubernetesWrapper extends ComputeWrapper {
         Logger.info("[KubernetesWrapper] Building Kubernetes template.");
         try {
             template = new KubernetesTerraformTemplate()
+                    .forService(sid)
                     .withCsd(deployPayload.getCsd())
                     .withWrapperConfiguration(this.getConfig())
                     .build();
         } catch (Exception e) {
             Logger.error("[KubernetesWrapper] Failed to build Kubernetes template: " + e.getMessage());
-            this.notifyDeploymentFailed(sid, "Failed to build Kubernetes template: " + e.getMessage());
+            this.notifyDeploymentFailed(sid, "Failed to build Kubernetes template");
 
             return;
         }
@@ -111,12 +112,12 @@ public class KubernetesWrapper extends ComputeWrapper {
                     .apply();
         } catch (TerraformException e) {
             Logger.error(e.getMessage());
-            this.notifyDeploymentFailed(sid, e.getMessage());
+            this.notifyDeploymentFailed(sid, "Failed to deploy service using terraform.");
 
             return;
         } catch (Exception e) {
             Logger.error("[KubernetesWrapper] Failed to run terraform command: " +  e.getMessage());
-            this.notifyDeploymentFailed(sid, "Failed to run terraform command: " +  e.getMessage());
+            this.notifyDeploymentFailed(sid, "Failed to deploy service using terraform.");
 
             return;
         }
