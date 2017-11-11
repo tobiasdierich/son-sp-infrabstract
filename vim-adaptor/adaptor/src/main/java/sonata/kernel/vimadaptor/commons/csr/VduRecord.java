@@ -3,7 +3,9 @@ package sonata.kernel.vimadaptor.commons.csr;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import sonata.kernel.vimadaptor.commons.VnfcInstance;
+import sonata.kernel.vimadaptor.commons.csd.Port;
 import sonata.kernel.vimadaptor.commons.csd.ResourceRequirements;
+import sonata.kernel.vimadaptor.commons.csd.ScalingConfiguration;
 
 import java.util.ArrayList;
 
@@ -14,27 +16,30 @@ public class VduRecord {
     @JsonProperty("number_of_instances")
     private int numberOfInstances;
 
-    @JsonProperty("resource_requirements")
-    private ResourceRequirements resourceRequirements;
-
     @JsonProperty("vdu_reference")
     private String vduReference;
 
-    @JsonProperty("vnfc_instance")
-    private ArrayList<VnfcInstance> vnfcInstance;
+    @JsonProperty("vim_id")
+    private String vimId;
 
-    public VduRecord() {
-        vnfcInstance = new ArrayList<VnfcInstance>();
-    }
+    @JsonProperty("service_image")
+    private String serviceImage;
 
-    public void addVnfcInstance(VnfcInstance instance) {
-        vnfcInstance.add(instance);
-    }
+    @JsonProperty("service_type")
+    private String serviceType;
+
+    @JsonProperty("service_ports")
+    private ArrayList<Port> servicePorts;
+
+    @JsonProperty("resource_requirements")
+    private ResourceRequirements resourceRequirements;
+
+    @JsonProperty("scale_in_out")
+    private ScalingConfiguration scalingConfiguration;
 
     public String getId() {
         return id;
     }
-
 
     public int getNumberOfInstances() {
         return numberOfInstances;
@@ -46,10 +51,6 @@ public class VduRecord {
 
     public String getVduReference() {
         return vduReference;
-    }
-
-    public ArrayList<VnfcInstance> getVnfcInstance() {
-        return vnfcInstance;
     }
 
     public void setId(String id) {
@@ -68,7 +69,43 @@ public class VduRecord {
         this.vduReference = vduReference;
     }
 
-    public void setVnfcInstance(ArrayList<VnfcInstance> vnfcInstance) {
-        this.vnfcInstance = vnfcInstance;
+    public String getVimId() {
+        return vimId;
+    }
+
+    public void setVimId(String vimId) {
+        this.vimId = vimId;
+    }
+
+    public String getServiceImage() {
+        return serviceImage;
+    }
+
+    public void setServiceImage(String serviceImage) {
+        this.serviceImage = serviceImage;
+    }
+
+    public String getServiceType() {
+        return serviceType;
+    }
+
+    public void setServiceType(String serviceType) {
+        this.serviceType = serviceType;
+    }
+
+    public ArrayList<Port> getServicePorts() {
+        return servicePorts;
+    }
+
+    public void setServicePorts(ArrayList<Port> servicePorts) {
+        this.servicePorts = servicePorts;
+    }
+
+    public ScalingConfiguration getScalingConfiguration() {
+        return scalingConfiguration;
+    }
+
+    public void setScalingConfiguration(ScalingConfiguration scalingConfiguration) {
+        this.scalingConfiguration = scalingConfiguration;
     }
 }

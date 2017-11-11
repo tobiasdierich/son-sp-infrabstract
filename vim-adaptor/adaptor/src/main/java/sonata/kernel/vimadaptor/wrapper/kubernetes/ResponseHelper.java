@@ -51,6 +51,11 @@ public class ResponseHelper {
             vdur.setId(vdu.getId());
             vdur.setNumberOfInstances(1);
             vdur.setVduReference(csd.getName() + ":" + vdu.getId());
+            vdur.setVimId(this.wrapper.getUuid());
+            vdur.setServiceImage(vdu.getServiceImage());
+            vdur.setServiceType(vdu.getServiceType());
+            vdur.setServicePorts(vdu.getServicePorts());
+            vdur.setResourceRequirements(vdu.getResourceRequirements());
             csr.addVdu(vdur);
         }
 
