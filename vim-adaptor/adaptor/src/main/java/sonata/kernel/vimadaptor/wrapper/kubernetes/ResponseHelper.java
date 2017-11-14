@@ -33,9 +33,9 @@ public class ResponseHelper {
     public CloudServiceDeployResponse buildDeployResponse(String sid, CloudServiceDeployPayload deployPayload) {
         CloudServiceDeployResponse response = new CloudServiceDeployResponse();
         response.setRequestStatus("COMPLETED");
-        response.setInstanceVimUuid(WrapperBay.getInstance().getVimRepo().getServiceInstanceVimUuid(deployPayload.getServiceInstanceId(), wrapper.getUuid()));
-        response.setInstanceName(WrapperBay.getInstance().getVimRepo().getServiceInstanceVimName(deployPayload.getServiceInstanceId(), wrapper.getUuid()));
-        response.setVimUuid(wrapper.getUuid());
+        response.setInstanceVimUuid(WrapperBay.getInstance().getVimRepo().getServiceInstanceVimUuid(deployPayload.getServiceInstanceId(), this.wrapper.getUuid()));
+        response.setInstanceName(WrapperBay.getInstance().getVimRepo().getServiceInstanceVimName(deployPayload.getServiceInstanceId(), this.wrapper.getUuid()));
+        response.setVimUuid(this.wrapper.getUuid());
         response.setMessage("");
 
         CsDescriptor csd = deployPayload.getCsd();

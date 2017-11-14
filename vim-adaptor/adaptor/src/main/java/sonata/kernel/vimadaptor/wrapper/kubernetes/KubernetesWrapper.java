@@ -91,7 +91,7 @@ public class KubernetesWrapper extends ComputeWrapper {
         Logger.info("[KubernetesWrapper] Building Kubernetes template.");
         try {
             template = new KubernetesTerraformTemplate()
-                    .forService(sid)
+                    .forService(deployPayload.getServiceInstanceId())
                     .withCsd(deployPayload.getCsd())
                     .withWrapperConfiguration(this.getConfig())
                     .build();
@@ -106,7 +106,7 @@ public class KubernetesWrapper extends ComputeWrapper {
         Logger.info("[KubernetesWrapper] Triggering terraform deployment.");
 
         try {
-            this.terraform.forService(sid)
+            this.terraform.forService(deployPayload.getServiceInstanceId())
                     .writeTemplate(template)
                     .init()
                     .apply();
@@ -230,18 +230,9 @@ public class KubernetesWrapper extends ComputeWrapper {
 
     @Override
     public boolean removeService(String instanceUuid, String callSid) {
-        boolean out = true;
+        Logger.info("[KubernetesWrapper] Received remove service call for instance " + instanceUuid);
 
-        double avgTime = 1309;
-        double stdTime = 343;
-        waitGaussianTime(avgTime, stdTime);
-
-        this.setChanged();
-        String body = "{\"status\":\"SUCCESS\"}";
-        WrapperStatusUpdate update = new WrapperStatusUpdate(this.sid, "SUCCESS", body);
-        this.notifyObservers(update);
-
-        return out;
+        return true;
     }
 
     @Override
