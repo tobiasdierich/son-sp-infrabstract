@@ -124,13 +124,13 @@ public class DeployCloudServiceProcessor extends AbstractCallProcessor {
                 this.handleReceivedErrorUpdate(update);
                 break;
             default:
-                Logger.error("[DeployCloudServerProcessor] Received invalid update status: " + update.getStatus());
+                Logger.error("[DeployCloudServiceProcessor] Received invalid update status: " + update.getStatus());
                 break;
         }
     }
 
     private void handleReceivedSuccessUpdate(WrapperStatusUpdate update) {
-        Logger.info("[DeployCloudServerProcessor] Deploy of service " + this.getSid() + " succeeded.");
+        Logger.info("[DeployCloudServiceProcessor] Deploy of service " + this.getSid() + " succeeded.");
 
         ServicePlatformMessage response = new ServicePlatformMessage(update.getBody(),
                 "application/x-yaml", this.getMessage().getReplyTo(), this.getSid(), null);
@@ -138,7 +138,7 @@ public class DeployCloudServiceProcessor extends AbstractCallProcessor {
     }
 
     private void handleReceivedErrorUpdate(WrapperStatusUpdate update) {
-        Logger.error("[DeployCloudServerProcessor] Deploy of service " + this.getSid() + " failed.");
+        Logger.error("[DeployCloudServiceProcessor] Deploy of service " + this.getSid() + " failed.");
 
         ServicePlatformMessage response = new ServicePlatformMessage(
                 "{\"request_status\":\"ERROR\",\"message\":\"" + update.getBody() + "\"}",

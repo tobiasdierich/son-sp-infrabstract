@@ -88,7 +88,7 @@ public class KubernetesWrapper extends ComputeWrapper {
         Logger.info("[KubernetesWrapper] Received deploy cloud service call.");
 
         TerraformTemplate template = null;
-        Logger.info("[KubernetesWrapper] Building Kubernetes template.");
+        Logger.info("[KubernetesWrapper] Building Kubernetes template for service instance " + deployPayload.getServiceInstanceId() + ".");
         try {
             template = new KubernetesTerraformTemplate()
                     .forService(deployPayload.getServiceInstanceId())
@@ -207,11 +207,11 @@ public class KubernetesWrapper extends ComputeWrapper {
      */
     @Override
     public boolean prepareService(String instanceId) {
-        double avgTime = 10576.52;
-        double stdTime = 1683.12;
-        waitGaussianTime(avgTime, stdTime);
+        Logger.info("[KubernetesWrapper] Preparing service for instance " + instanceId);
+
         WrapperBay.getInstance().getVimRepo().writeServiceInstanceEntry(instanceId, instanceId,
                 instanceId, this.getConfig().getUuid());
+
         return true;
     }
 

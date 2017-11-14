@@ -78,7 +78,7 @@ public class PrepareServiceCallProcessor extends AbstractCallProcessor {
 
     try {
       payload = mapper.readValue(message.getBody(), ServicePreparePayload.class);
-      Logger.info("payload parsed. Configuring VIMs");
+      Logger.info("payload parsed. Configuring VIMs for instance " + payload.getInstanceId());
 
       for (VimPreDeploymentList vim : payload.getVimList()) {
         ComputeWrapper wr = WrapperBay.getInstance().getComputeWrapper(vim.getUuid());

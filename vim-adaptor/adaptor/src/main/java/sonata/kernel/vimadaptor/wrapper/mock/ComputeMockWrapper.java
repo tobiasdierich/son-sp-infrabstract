@@ -188,6 +188,7 @@ public class ComputeMockWrapper extends ComputeWrapper {
   public boolean prepareService(String instanceId) {
     double avgTime = 10576.52;
     double stdTime = 1683.12;
+    Logger.info("[MockWrapper] Preparing service for instance " + instanceId);
     waitGaussianTime(avgTime, stdTime);
     WrapperBay.getInstance().getVimRepo().writeServiceInstanceEntry(instanceId, instanceId,
       instanceId, this.getConfig().getUuid());
