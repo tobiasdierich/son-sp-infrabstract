@@ -88,10 +88,10 @@ public class KubernetesWrapper extends ComputeWrapper {
         Logger.info("[KubernetesWrapper] Received deploy cloud service call.");
 
         TerraformTemplate template = null;
-        Logger.info("[KubernetesWrapper] Building Kubernetes template for service instance " + deployPayload.getServiceInstanceId() + ".");
+        Logger.info("[KubernetesWrapper] Building Kubernetes template for service instance " + deployPayload.getCsd().getInstanceUuid() + ".");
         try {
             template = new KubernetesTerraformTemplate()
-                    .forService(deployPayload.getServiceInstanceId())
+                    .forService(deployPayload.getCsd().getInstanceUuid())
                     .withCsd(deployPayload.getCsd())
                     .withWrapperConfiguration(this.getConfig())
                     .build();
@@ -106,7 +106,7 @@ public class KubernetesWrapper extends ComputeWrapper {
         Logger.info("[KubernetesWrapper] Triggering terraform deployment.");
 
         try {
-            this.terraform.forService(deployPayload.getServiceInstanceId())
+            this.terraform.forService(deployPayload.getCsd().getInstanceUuid())
                     .writeTemplate(template)
                     .init()
                     .apply();
@@ -122,6 +122,11 @@ public class KubernetesWrapper extends ComputeWrapper {
             return;
         }
 
+        WrapperBay.getInstance().getVimRepo().writeCloudServiceInstanceEntry(
+                deployPayload.getCsd().getInstanceUuid(),
+                deployPayload.getServiceInstanceId(),
+                this.getConfig().getUuid()
+            );
         Logger.info("[KubernetesWrapper] Successfully deployed cloud service.");
 
         this.notifyDeploymentSuccessful(sid, deployPayload);

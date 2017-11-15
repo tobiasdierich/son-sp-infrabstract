@@ -120,7 +120,8 @@ public class VimRepo {
         if (tablename.toLowerCase().equals("vim")
             || tablename.toLowerCase().equals("service_instances")
             || tablename.toLowerCase().equals("function_instances")
-            || tablename.toLowerCase().equals("link_vim")) {
+            || tablename.toLowerCase().equals("link_vim")
+            || tablename.toLowerCase().equals("cloud_service_instances")) {
           isEnvironmentSet = true;
           break;
         }
@@ -148,7 +149,11 @@ public class VimRepo {
             + "(COMPUTE_UUID TEXT NOT NULL REFERENCES vim(UUID) ON DELETE CASCADE,"
             + " NETWORKING_UUID TEXT NOT NULL REFERENCES vim(UUID) ON DELETE CASCADE" + ");";
         stmt.executeUpdate(sql);
-
+        sql = "CREATE TABLE cloud_service_instances " + "(" + "INSTANCE_UUID TEXT PRIMARY KEY NOT NULL,"
+            + " SERVICE_INSTANCE_UUID TEXT NOT NULL," + " VIM_UUID TEXT NOT NULL,"
+            + " FOREIGN KEY (SERVICE_INSTANCE_UUID, VIM_UUID) REFERENCES service_instances(INSTANCE_UUID, VIM_UUID) ON DELETE CASCADE"
+            + ");";
+        stmt.executeUpdate(sql);
       }
 
     } catch (SQLException e) {
@@ -1377,6 +1382,65 @@ public class VimRepo {
     }
     if (!out) {
       Logger.info("Function Instance written successfully");
+    }
+
+    return out;
+  }
+
+  /**
+   * write the cloud service instance record into the repository.
+   *
+   * @param cloudServiceInstanceUuid the uuid of the cloud service instance
+   * @param serviceInstanceUuid the uuid of the service instance this cloud service instance is part of.
+   * @param computeWrapperUuid the uuid of the NFVi-PoP this cloud service is deployed in.
+   *
+   * @return true for process success
+   */
+  public boolean writeCloudServiceInstanceEntry(String cloudServiceInstanceUuid, String serviceInstanceUuid,
+                                            String computeWrapperUuid) {
+    boolean out = true;
+
+    Connection connection = null;
+    PreparedStatement stmt = null;
+    try {
+      Class.forName("org.postgresql.Driver");
+      connection =
+              DriverManager.getConnection(
+                      "jdbc:postgresql://" + prop.getProperty("repo_host") + ":"
+                              + prop.getProperty("repo_port") + "/" + "vimregistry",
+                      prop.getProperty("user"), prop.getProperty("pass"));
+      connection.setAutoCommit(false);
+
+      String sql =
+              "INSERT INTO cloud_service_instances  (INSTANCE_UUID, SERVICE_INSTANCE_UUID, VIM_UUID) "
+                      + "VALUES (?, ?, ?);";
+      stmt = connection.prepareStatement(sql);
+      stmt.setString(1, cloudServiceInstanceUuid);
+      stmt.setString(2, serviceInstanceUuid);
+      stmt.setString(3, computeWrapperUuid);
+      stmt.executeUpdate();
+      connection.commit();
+    } catch (SQLException e) {
+      Logger.error(e.getMessage());
+      out = false;
+    } catch (ClassNotFoundException e) {
+      Logger.error(e.getMessage(), e);
+      out = false;
+    } finally {
+      try {
+        if (stmt != null) {
+          stmt.close();
+        }
+        if (connection != null) {
+          connection.close();
+        }
+      } catch (SQLException e) {
+        Logger.error(e.getMessage());
+        out = false;
+      }
+    }
+    if (out) {
+      Logger.info("Cloud Service Instance written successfully");
     }
 
     return out;
