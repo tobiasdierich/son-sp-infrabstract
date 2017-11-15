@@ -87,14 +87,16 @@ public class DeconfigureNetworkCallProcessor extends AbstractCallProcessor {
       NetworkWrapper netVim =
           WrapperBay.getInstance().getNetworkVimFromComputeVimUuid(computeVimUuid);
       if (netVim == null) {
-        Logger.error(
+        continue;
+        // TODO: Uncomment once Kubernetes wrapper is attached to a network wrapper
+        /*Logger.error(
             "Unable to deconfigure networking. Cannot find NetVim associated with compute vim "
                 + computeVimUuid);
         String responseJson =
             "{\"request_status\":\"ERROR\",\"message\":\"Internal Server Error. Can't deconfigure networking.\"}";
         this.sendToMux(new ServicePlatformMessage(responseJson, "application/json",
             message.getReplyTo(), message.getSid(), null));
-        return false;
+        return false;*/
       }
       try {
         netVim.deconfigureNetworking(data.getServiceInstanceId());
