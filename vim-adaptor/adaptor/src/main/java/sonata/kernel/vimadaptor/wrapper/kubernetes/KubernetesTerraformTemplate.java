@@ -19,8 +19,13 @@ public class KubernetesTerraformTemplate extends TerraformTemplate {
     private String serviceId;
 
     @Override
-    public String getBaseTemplate() {
-        return "templates/kubernetes.tf";
+    public String getMainTemplate() {
+        return "templates/kubernetes/main.tf";
+    }
+
+    @Override
+    public String getServiceTemplate() {
+        return "templates/kubernetes/cloud_service.tf";
     }
 
     @Override

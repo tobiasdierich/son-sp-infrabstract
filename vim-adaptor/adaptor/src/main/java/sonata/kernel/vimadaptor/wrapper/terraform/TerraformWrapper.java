@@ -98,15 +98,16 @@ public class TerraformWrapper {
      * Write the given terraform template to disk.
      *
      * @param template TerraformTemplate
+     * @param instanceId String
      * @return this
      */
-    public TerraformWrapper writeTemplate(TerraformTemplate template) throws IOException, PebbleException {
-        this.createFoldersIfNotExist();
+    public TerraformWrapper writeTemplate(TerraformTemplate template, String instanceId) throws IOException, PebbleException {
+        this.initialiseService(template);
 
-        Logger.info("[TerraformWrapper] Writing terraform config to " + this.getTerraformConfigurationPath());
+        Logger.info("[TerraformWrapper] Writing terraform config to " + this.getTerraformServiceConfigurationPath(instanceId));
 
-        BufferedWriter writer = new BufferedWriter(new FileWriter(this.getTerraformConfigurationPath()));
-        writer.write(template.getContent());
+        BufferedWriter writer = new BufferedWriter(new FileWriter(this.getTerraformServiceConfigurationPath(instanceId)));
+        writer.write(template.getServiceContent());
         writer.close();
 
         return this;
@@ -123,6 +124,29 @@ public class TerraformWrapper {
         this.serviceId = serviceId;
 
         return this;
+    }
+
+    /**
+     * Initialise the terraform project if it has not been initialised yet.
+     */
+    private void initialiseService(TerraformTemplate template) throws IOException, PebbleException {
+        this.createFoldersIfNotExist();
+
+        File mainConfig = new File(this.getTerraformMainConfigurationPath());
+        if (!mainConfig.exists() && template.getMainContent() != null) {
+            this.writeMainTemplate(template);
+        }
+    }
+
+    /**
+     * Write the content of the main terraform template.
+     *
+     * @param template TerraformTemplate
+     */
+    private void writeMainTemplate(TerraformTemplate template) throws IOException, PebbleException {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(this.getTerraformMainConfigurationPath()));
+        writer.write(template.getMainContent());
+        writer.close();
     }
 
     /**
@@ -146,11 +170,22 @@ public class TerraformWrapper {
     }
 
     /**
-     * Get the full path to the terraform configuration file.
+     * Get the path to the main configuration file.
      *
      * @return String
      */
-    private String getTerraformConfigurationPath() {
-        return this.getServicePath() + "service.tf";
+    private String getTerraformMainConfigurationPath() {
+        return this.getServicePath() + "main.tf";
+    }
+
+    /**
+     * Get the full path to the terraform service configuration file.
+     *
+     * @param instanceId String
+     *
+     * @return String
+     */
+    private String getTerraformServiceConfigurationPath(String instanceId) {
+        return this.getServicePath() + instanceId + ".tf";
     }
 }

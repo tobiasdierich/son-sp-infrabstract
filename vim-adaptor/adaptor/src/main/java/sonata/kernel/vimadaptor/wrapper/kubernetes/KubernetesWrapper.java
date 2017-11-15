@@ -107,7 +107,7 @@ public class KubernetesWrapper extends ComputeWrapper {
 
         try {
             this.terraform.forService(deployPayload.getCsd().getInstanceUuid())
-                    .writeTemplate(template)
+                    .writeTemplate(template, deployPayload.getCsd().getInstanceUuid())
                     .init()
                     .apply();
         } catch (TerraformException e) {

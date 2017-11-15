@@ -1,12 +1,3 @@
-provider "kubernetes" {
-    host = "{{ endpoint }}"
-
-    token = "{{ token }}"
-    cluster_ca_certificate = <<EOF
-{{ caCert }}
-EOF
-}
-
 {% for vdu in csd.getVirtualDeploymentUnits() %}
 resource "kubernetes_replication_controller" "{{ vdu.getName() }}-{{ serviceId }}" {
   metadata {
