@@ -1,214 +1,227 @@
 package sonata.kernel.vimadaptor.wrapper.terraform;
 
-import com.mitchellbosecke.pebble.error.PebbleException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.LoggerFactory;
-import org.apache.commons.io.FileUtils;
+import sonata.kernel.vimadaptor.commons.*;
+import sonata.kernel.vimadaptor.wrapper.*;
+import sonata.kernel.vimadaptor.wrapper.kubernetes.KubernetesTerraformTemplate;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
-
-public class TerraformWrapper {
+abstract public class TerraformWrapper extends ComputeWrapper {
 
     private static final org.slf4j.Logger Logger = LoggerFactory.getLogger(TerraformWrapper.class);
 
-    private static final String TERRAFORM_LOCATION = "/root/terraform";
-
-    private String baseDir;
-
-    private String serviceId;
-
-    public TerraformWrapper(String baseDir) {
-        this.baseDir = baseDir;
-    }
+    /**
+     * Terraform client.
+     */
+    protected TerraformClient terraform;
 
     /**
-     * Run the given terraform command.
+     * Constructor.
      *
-     * @param command String
-     * @return String
+     * @param config WrapperConfiguration
      */
-    public String runCmd(String... command) throws IOException, InterruptedException, TerraformException {
-        StringBuilder output = new StringBuilder();
+    public TerraformWrapper(WrapperConfiguration config) {
+        super(config);
 
-        ProcessBuilder builder;
+        this.terraform = new TerraformClient("/root/terraform_data");
+    }
 
-        ArrayList<String> params = new ArrayList<>(Arrays.asList(command));
-        params.add(0, TERRAFORM_LOCATION);
-        builder = new ProcessBuilder(params);
+    public void deployFunction(FunctionDeployPayload data, String sid) {
+        Logger.error(this.buildLogMessage("Received deploy function call. Ignoring."));
+    }
 
-        builder = builder.directory(new File(this.getServicePath()))
-                .redirectErrorStream(true);
+    public void scaleFunction(FunctionScalePayload data, String sid) {
+        Logger.error(this.buildLogMessage("Received scale function call. Ignoring."));
+    }
 
-        Map<String, String> env = builder.environment();
-        env.put("HOME", "/root");
+    public void deployCloudService(CloudServiceDeployPayload deployPayload, String sid) {
+        Logger.info(this.buildLogMessage("Received deploy cloud service call for service " + deployPayload.getServiceInstanceId() + "."));
 
-        Process process = builder.start();
-        InputStream is = process.getInputStream();
-        InputStreamReader isr = new InputStreamReader(is);
-        BufferedReader br = new BufferedReader(isr);
-        String line;
+        TerraformTemplate template = null;
+        Logger.info(this.buildLogMessage("Building Kubernetes template for service instance " + deployPayload.getCsd().getInstanceUuid() + "."));
+        try {
+            template = new KubernetesTerraformTemplate()
+                    .forService(deployPayload.getCsd().getInstanceUuid())
+                    .withCsd(deployPayload.getCsd())
+                    .withWrapperConfiguration(this.getConfig())
+                    .build();
+        } catch (Exception e) {
+            Logger.error(this.buildLogMessage("Failed to build template: " + e.getMessage()));
+            this.notifyCloudServiceDeploymentFailed(sid, "Failed to build template");
 
-        while ((line = br.readLine()) != null) {
-            output.append(line).append('\n');
+            return;
         }
 
-        int exitCode = process.waitFor();
+        Logger.info(this.buildLogMessage("Building template successful."));
+        Logger.info(this.buildLogMessage("Triggering terraform deployment."));
 
-        if (exitCode > 0) {
-            String err = "[TerraformWrapper] Error while running terraform " + command[0] + ": " + output;
+        try {
+            this.terraform.forService(deployPayload.getServiceInstanceId())
+                    .writeTemplate(template, deployPayload.getCsd().getInstanceUuid())
+                    .init()
+                    .apply();
+        } catch (TerraformException e) {
+            Logger.error(e.getMessage());
+            this.notifyCloudServiceDeploymentFailed(sid, "Failed to deploy service using terraform.");
 
-            throw new TerraformException(err);
+            return;
+        } catch (Exception e) {
+            Logger.error(this.buildLogMessage("Failed to run terraform command: " +  e.getMessage()));
+            this.notifyCloudServiceDeploymentFailed(sid, "Failed to deploy service using terraform.");
+
+            return;
         }
 
-        return output.toString();
+        WrapperBay.getInstance().getVimRepo().writeCloudServiceInstanceEntry(
+                deployPayload.getCsd().getInstanceUuid(),
+                deployPayload.getServiceInstanceId(),
+                this.getConfig().getUuid()
+        );
+        Logger.info(this.buildLogMessage("Successfully deployed cloud service."));
+
+        this.notifyCloudServiceDeploymentSuccessful(sid, this.getCloudServiceDeployResponse(deployPayload));
+    }
+
+    @Deprecated
+    public boolean deployService(ServiceDeployPayload data, String callSid) {
+        Logger.error(this.buildLogMessage("Received deploy service call. Ignoring."));
+        return false;
+    }
+
+    public boolean prepareService(String instanceId) throws Exception {
+        Logger.info(this.buildLogMessage("Preparing service for instance " + instanceId));
+
+        WrapperBay.getInstance().getVimRepo().writeServiceInstanceEntry(instanceId, instanceId,
+                instanceId, this.getConfig().getUuid());
+
+        return true;
+    }
+
+    public boolean removeService(String instanceUuid, String callSid) {
+        Logger.info(this.buildLogMessage("Received remove service call for service instance " + instanceUuid));
+
+        // Call terraform destroy
+        try {
+            this.terraform.forService(instanceUuid)
+                    .destroy();
+        } catch (TerraformException e) {
+            Logger.error(e.getMessage());
+            this.notifyServiceRemovalFailed(callSid, "Failed to remove service using terraform.");
+
+            return false;
+        } catch (Exception e) {
+            Logger.error(this.buildLogMessage("Failed to run terraform command: " +  e.getMessage()));
+            this.notifyServiceRemovalFailed(callSid, "Failed to remove service using terraform.");
+
+            return false;
+        }
+
+        Logger.info(this.buildLogMessage("Removing DB entries for service."));
+        WrapperBay.getInstance().getVimRepo().removeServiceInstanceEntry(instanceUuid, this.getConfig().getUuid());
+
+        Logger.info(this.buildLogMessage("Successfully removed service " + instanceUuid + "."));
+
+        this.notifyServiceRemovalSuccessful(callSid);
+
+        return true;
+    }
+
+    public boolean isImageStored(VnfImage image, String callSid) {
+        Logger.error(this.buildLogMessage("Received is image stored call. Ignoring."));
+
+        return true;
+    }
+
+    public void uploadImage(VnfImage image) {
+        Logger.error(this.buildLogMessage("Received upload image call. Ignoring."));
+    }
+
+    public void removeImage(VnfImage image) {
+        Logger.error(this.buildLogMessage("Received remove image call. Ignoring."));
     }
 
     /**
-     * Run "terraform init".
-     *
-     * @return this
+     * Notify observers that the deployment was successful.
      */
-    public TerraformWrapper init() throws IOException, TerraformException, InterruptedException {
-        Logger.info("[TerraformWrapper] Running terraform init for " + serviceId + "...");
+    private void notifyCloudServiceDeploymentSuccessful(String sid, CloudServiceDeployResponse response) {
+        try {
+            String yaml = TerraformHelpers.transformToYAML(response);
+            WrapperStatusUpdate update = new WrapperStatusUpdate(sid, "SUCCESS", yaml);
 
-        this.runCmd("init");
-
-        Logger.info("[TerraformWrapper] terraform init completed for " + serviceId + ".");
-
-        return this;
-    }
-
-    /**
-     * Run "terraform apply".
-     *
-     * @return this
-     */
-    public TerraformWrapper apply() throws IOException, TerraformException, InterruptedException {
-        Logger.info("[TerraformWrapper] Running terraform apply for " + serviceId + "...");
-
-        this.runCmd("apply", "-auto-approve");
-
-        Logger.info("[TerraformWrapper] terraform apply completed for " + serviceId + ".");
-
-        return this;
-    }
-
-    /**
-     * Run "terraform destroy"
-     *
-     * @return this
-     */
-    public TerraformWrapper destroy() throws IOException, TerraformException, InterruptedException {
-        Logger.info("[TerraformWrapper] Running terraform destroy for " + serviceId + ".");
-
-        this.runCmd("destroy", "-force");
-
-        Logger.info("[TerraformWrapper] Removing service data for " + serviceId + "...");
-
-        File serviceFolder = new File(this.getServicePath());
-        FileUtils.deleteDirectory(serviceFolder);
-
-        Logger.info("[TerraformWrapper] terraform destroy completed for " + serviceId + ".");
-
-        return this;
-    }
-
-    /**
-     * Write the given terraform template to disk.
-     *
-     * @param template TerraformTemplate
-     * @param instanceId String
-     * @return this
-     */
-    public TerraformWrapper writeTemplate(TerraformTemplate template, String instanceId) throws IOException, PebbleException {
-        this.initialiseService(template);
-
-        Logger.info("[TerraformWrapper] Writing terraform service config to " + this.getTerraformServiceConfigurationPath(instanceId));
-
-        BufferedWriter writer = new BufferedWriter(new FileWriter(this.getTerraformServiceConfigurationPath(instanceId)));
-        writer.write(template.getServiceContent());
-        writer.close();
-
-        return this;
-    }
-
-    /**
-     * Set the service id.
-     *
-     * @param serviceId String
-     *
-     * @return TerraformWrapper
-     */
-    public TerraformWrapper forService(String serviceId) {
-        this.serviceId = serviceId;
-
-        return this;
-    }
-
-    /**
-     * Initialise the terraform project if it has not been initialised yet.
-     */
-    private void initialiseService(TerraformTemplate template) throws IOException, PebbleException {
-        this.createFoldersIfNotExist();
-
-        File mainConfig = new File(this.getTerraformMainConfigurationPath());
-        if (!mainConfig.exists() && template.getMainContent() != null) {
-            this.writeMainTemplate(template);
+            this.notifyUpdate(update);
+        } catch (JsonProcessingException e) {
+            this.notifyCloudServiceDeploymentFailed(sid, "Exception while sending deployment successful message.");
         }
     }
 
     /**
-     * Write the content of the main terraform template.
+     * Notify observers that the deployment failed.
      *
-     * @param template TerraformTemplate
+     * @param error String
      */
-    private void writeMainTemplate(TerraformTemplate template) throws IOException, PebbleException {
-        Logger.info("[TerraformWrapper] Writing terraform main config to " + this.getTerraformMainConfigurationPath());
-
-        BufferedWriter writer = new BufferedWriter(new FileWriter(this.getTerraformMainConfigurationPath()));
-        writer.write(template.getMainContent());
-        writer.close();
+    private void notifyCloudServiceDeploymentFailed(String sid, String error) {
+        WrapperStatusUpdate update = new WrapperStatusUpdate(sid, "ERROR", error);
+        this.notifyUpdate(update);
     }
 
     /**
-     * Create any directories that do not exist.
+     * Notify observers that the service removal was successful.
      */
-    private void createFoldersIfNotExist() {
-        File servicePath = new File(this.getServicePath());
+    private void notifyServiceRemovalSuccessful(String sid) {
+        String body =
+                "{\"status\":\"COMPLETED\",\"wrapper_uuid\":\"" + this.getConfig().getUuid() + "\"}";
+        WrapperStatusUpdate update = new WrapperStatusUpdate(sid, "SUCCESS", body);
 
-        if (!servicePath.isDirectory()) {
-            servicePath.mkdirs();
-        }
+        this.notifyUpdate(update);
     }
 
     /**
-     * Get the service path.
+     * Notify observers that an error occurred while removing the service.
+     *
+     * @param error String
+     */
+    private void notifyServiceRemovalFailed(String sid, String error) {
+        WrapperStatusUpdate update = new WrapperStatusUpdate(sid, "ERROR", error);
+        this.notifyUpdate(update);
+    }
+
+    /**
+     * Propagate status update to observers.
+     *
+     * @param update WrapperStatusUpdate
+     */
+    protected void notifyUpdate(WrapperStatusUpdate update) {
+        this.markAsChanged();
+        this.notifyObservers(update);
+    }
+
+    /**
+     * Build a log message with the wrapper's name.
+     *
+     * @param message String
      *
      * @return String
      */
-    private String getServicePath() {
-        return this.baseDir + this.serviceId + File.separator;
+    protected String buildLogMessage(String message) {
+        return String.format("[%s] %s", this.getWrapperName(), message);
     }
 
+    @Override
+    public abstract ResourceUtilisation getResourceUtilisation();
+
     /**
-     * Get the path to the main configuration file.
+     * Get the deploy response from the deploy payload.
+     *
+     * @param payload CloudServiceDeployPayload
+     *
+     * @return CloudServiceDeployResponse
+     */
+    protected abstract CloudServiceDeployResponse getCloudServiceDeployResponse(CloudServiceDeployPayload payload);
+
+    /**
+     * Get the wrapper's name.
      *
      * @return String
      */
-    private String getTerraformMainConfigurationPath() {
-        return this.getServicePath() + "main.tf";
-    }
-
-    /**
-     * Get the full path to the terraform service configuration file.
-     *
-     * @param instanceId String
-     *
-     * @return String
-     */
-    private String getTerraformServiceConfigurationPath(String instanceId) {
-        return this.getServicePath() + instanceId + ".tf";
-    }
+    protected abstract String getWrapperName();
 }

@@ -37,6 +37,7 @@ import sonata.kernel.vimadaptor.wrapper.WrapperConfiguration;
 import sonata.kernel.vimadaptor.wrapper.WrapperStatusUpdate;
 
 import io.fabric8.kubernetes.api.model.NodeList;
+import sonata.kernel.vimadaptor.wrapper.terraform.TerraformClient;
 import sonata.kernel.vimadaptor.wrapper.terraform.TerraformException;
 import sonata.kernel.vimadaptor.wrapper.terraform.TerraformTemplate;
 import sonata.kernel.vimadaptor.wrapper.terraform.TerraformWrapper;
@@ -45,280 +46,62 @@ import java.io.IOException;
 import java.util.Random;
 
 
-public class KubernetesWrapper extends ComputeWrapper {
+public class KubernetesWrapper extends TerraformWrapper {
 
     private static final org.slf4j.Logger Logger = LoggerFactory.getLogger(KubernetesWrapper.class);
-
-    private Random r;
-
-    private String sid;
-
-    private TerraformWrapper terraform;
-
-    private ResponseHelper response;
 
     /**
      * Kubernetes related vars
      */
     private KubernetesClient client;
+
+    private ResponseHelper response;
+
     private NodeList nodes;
 
+    /**
+     * Constructor.
+     *
+     * @param config WrapperConfiguration
+     */
     public KubernetesWrapper(WrapperConfiguration config) {
         super(config);
-        this.r = new Random(System.currentTimeMillis());
+
         this.client = new KubernetesClient(config);
-        this.terraform = new TerraformWrapper("/root/terraform_data/");
         this.response = new ResponseHelper(config);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * sonata.kernel.vimadaptor.wrapper.ComputeWrapper#deployFunction(sonata.kernel.vimadaptor.commons
-     * .FunctionDeployPayload, java.lang.String)
-     */
-    @Override
-    public void deployFunction(FunctionDeployPayload data, String sid) {
-        Logger.error("[KubernetesWrapper] Received deploy function call. Ignoring.");
-    }
-
-    @Override
-    public void deployCloudService(CloudServiceDeployPayload deployPayload, String sid) {
-        Logger.info("[KubernetesWrapper] Received deploy cloud service call for service " + deployPayload.getServiceInstanceId() + ".");
-
-        TerraformTemplate template = null;
-        Logger.info("[KubernetesWrapper] Building Kubernetes template for service instance " + deployPayload.getCsd().getInstanceUuid() + ".");
-        try {
-            template = new KubernetesTerraformTemplate()
-                    .forService(deployPayload.getCsd().getInstanceUuid())
-                    .withCsd(deployPayload.getCsd())
-                    .withWrapperConfiguration(this.getConfig())
-                    .build();
-        } catch (Exception e) {
-            Logger.error("[KubernetesWrapper] Failed to build Kubernetes template: " + e.getMessage());
-            this.notifyDeploymentFailed(sid, "Failed to build Kubernetes template");
-
-            return;
-        }
-
-        Logger.info("[KubernetesWrapper] Building Kubernetes template successful.");
-        Logger.info("[KubernetesWrapper] Triggering terraform deployment.");
-
-        try {
-            this.terraform.forService(deployPayload.getServiceInstanceId())
-                    .writeTemplate(template, deployPayload.getCsd().getInstanceUuid())
-                    .init()
-                    .apply();
-        } catch (TerraformException e) {
-            Logger.error(e.getMessage());
-            this.notifyDeploymentFailed(sid, "Failed to deploy service using terraform.");
-
-            return;
-        } catch (Exception e) {
-            Logger.error("[KubernetesWrapper] Failed to run terraform command: " +  e.getMessage());
-            this.notifyDeploymentFailed(sid, "Failed to deploy service using terraform.");
-
-            return;
-        }
-
-        WrapperBay.getInstance().getVimRepo().writeCloudServiceInstanceEntry(
-                deployPayload.getCsd().getInstanceUuid(),
-                deployPayload.getServiceInstanceId(),
-                this.getConfig().getUuid()
-            );
-        Logger.info("[KubernetesWrapper] Successfully deployed cloud service.");
-
-        this.notifyDeploymentSuccessful(sid, deployPayload);
-    }
-
     /**
-     * Notify observers that the deployment was successful.
+     * Get the resource utilisation of the Kubernetes cluster.
      */
-    private void notifyDeploymentSuccessful(String sid, CloudServiceDeployPayload deployPayload) {
-        CloudServiceDeployResponse response = this.response.buildDeployResponse(sid, deployPayload);
-
-        try {
-            String yaml = this.response.transformToYAML(response);
-            WrapperStatusUpdate update = new WrapperStatusUpdate(sid, "SUCCESS", yaml);
-
-            this.notifyUpdate(update);
-        } catch (JsonProcessingException e) {
-            this.notifyDeploymentFailed(sid, "Exception while sending deployment successful message.");
-        }
-    }
-
-    /**
-     * Notify observers that the deployment failed.
-     *
-     * @param error String
-     */
-    private void notifyDeploymentFailed(String sid, String error) {
-        WrapperStatusUpdate update = new WrapperStatusUpdate(sid, "ERROR", error);
-        this.notifyUpdate(update);
-    }
-
-    /**
-     * Propagate status update to observers.
-     *
-     * @param update WrapperStatusUpdate
-     */
-    private void notifyUpdate(WrapperStatusUpdate update) {
-        this.markAsChanged();
-        this.notifyObservers(update);
-    }
-
-    @Deprecated
-    @Override
-    public boolean deployService(ServiceDeployPayload data, String callSid) {
-        return false;
-    }
-
     @Override
     public ResourceUtilisation getResourceUtilisation() {
         long start = System.currentTimeMillis();
-        Logger.info("[KubernetesWrapper] Getting resource utilisation...");
+        Logger.info(this.buildLogMessage("Getting resource utilisation..."));
 
         ResourceUtilisation resourceUtilisation = new ResourceUtilisation();
 
         try {
             resourceUtilisation = this.client.getClusterResourceUtilisation(this.getNodes());
 
-            Logger.info("[KubernetesWrapper] Resource utilisation retrieved in " + (System.currentTimeMillis() - start) + "ms.");
+            Logger.info(this.buildLogMessage("Resource utilisation retrieved in " + (System.currentTimeMillis() - start) + "ms."));
         } catch (IOException e) {
-            Logger.error("[KubernetesWrapper] Failed to retrieve resource utilisation. Error message: " + e.getMessage());
+            Logger.error(this.buildLogMessage("Failed to retrieve resource utilisation. Error message: " + e.getMessage()));
         }
 
         return resourceUtilisation;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see sonata.kernel.vimadaptor.wrapper.ComputeWrapper#isImageStored(java.lang.String)
-     */
-    @Override
-    public boolean isImageStored(VnfImage image, String callSid) {
-        double avgTime = 1357.34;
-        double stdTime = 683.96;
-        waitGaussianTime(avgTime, stdTime);
-        return r.nextBoolean();
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see sonata.kernel.vimadaptor.wrapper.ComputeWrapper#prepareService(java.lang.String)
-     */
-    @Override
-    public boolean prepareService(String instanceId) {
-        Logger.info("[KubernetesWrapper] Preparing service for instance " + instanceId);
-
-        WrapperBay.getInstance().getVimRepo().writeServiceInstanceEntry(instanceId, instanceId,
-                instanceId, this.getConfig().getUuid());
-
-        return true;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see sonata.kernel.vimadaptor.wrapper.ComputeWrapper#removeImage(java.lang.String)
-     */
-    @Override
-    public void removeImage(VnfImage image) {
-        this.setChanged();
-        String body = "{\"status\":\"SUCCESS\"}";
-        WrapperStatusUpdate update = new WrapperStatusUpdate(this.sid, "SUCCESS", body);
-        this.notifyObservers(update);
-    }
-
-    @Override
-    public boolean removeService(String instanceUuid, String callSid) {
-        Logger.info("[KubernetesWrapper] Received remove service call for service instance " + instanceUuid);
-
-        // Call terraform destroy
-        try {
-            this.terraform.forService(instanceUuid)
-                    .destroy();
-        } catch (TerraformException e) {
-            Logger.error(e.getMessage());
-            this.notifyRemoveFailed(callSid, "Failed to remove service using terraform.");
-
-            return false;
-        } catch (Exception e) {
-            Logger.error("[KubernetesWrapper] Failed to run terraform command: " +  e.getMessage());
-            this.notifyRemoveFailed(callSid, "Failed to remove service using terraform.");
-
-            return false;
-        }
-
-        Logger.info("[KubernetesWrapper] Removing DB entries for service.");
-        WrapperBay.getInstance().getVimRepo().removeServiceInstanceEntry(instanceUuid, this.getConfig().getUuid());
-
-        Logger.info("[KubernetesWrapper] Successfully removed service " + instanceUuid + ".");
-
-        this.notifyRemoveSuccessful(callSid);
-
-        return true;
-    }
-
     /**
-     * Notify observers that the service removal was successful.
-     */
-    private void notifyRemoveSuccessful(String sid) {
-        String body =
-                "{\"status\":\"COMPLETED\",\"wrapper_uuid\":\"" + this.getConfig().getUuid() + "\"}";
-        WrapperStatusUpdate update = new WrapperStatusUpdate(sid, "SUCCESS", body);
-
-        this.notifyUpdate(update);
-    }
-
-    /**
-     * Notify observers that an error occurred while removing the service.
+     * Get the deploy response from the deploy payload.
      *
-     * @param error String
-     */
-    private void notifyRemoveFailed(String sid, String error) {
-        WrapperStatusUpdate update = new WrapperStatusUpdate(sid, "ERROR", error);
-        this.notifyUpdate(update);
-    }
-
-    @Override
-    public void scaleFunction(FunctionScalePayload data, String sid) {
-        // TODO - smendel - add implementation and comments on function
-    }
-
-    @Override
-    public String toString() {
-        return "KubernetesWrapper-"+this.getConfig().getUuid();
-    }
-
-    /*
-     * (non-Javadoc)
+     * @param payload CloudServiceDeployPayload
      *
-     * @see
-     * sonata.kernel.vimadaptor.wrapper.ComputeWrapper#uploadImage(sonata.kernel.vimadaptor.commons.
-     * VnfImage)
+     * @return CloudServiceDeployResponse
      */
     @Override
-    public void uploadImage(VnfImage image) throws IOException {
-
-        double avgTime = 7538.75;
-        double stdTime = 1342.06;
-        waitGaussianTime(avgTime, stdTime);
-
-        return;
-    }
-
-    private void waitGaussianTime(double avgTime, double stdTime) {
-        double waitTime = Math.abs((r.nextGaussian() - 0.5) * stdTime + avgTime);
-        //Logger.debug("Simulating processing delay.Waiting "+waitTime/1000.0+"s");
-        try {
-            Thread.sleep((long) Math.floor(waitTime));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    protected CloudServiceDeployResponse getCloudServiceDeployResponse(CloudServiceDeployPayload payload) {
+        return this.response.buildDeployResponse(payload);
     }
 
     /**
@@ -332,5 +115,19 @@ public class KubernetesWrapper extends ComputeWrapper {
         }
 
         return this.nodes;
+    }
+
+    /**
+     * Get the wrapper's name.
+     *
+     * @return String
+     */
+    @Override
+    protected String getWrapperName() {
+        return "KubernetesWrapper";
+    }
+
+    public String toString() {
+        return "KubernetesWrapper-"+this.getConfig().getUuid();
     }
 }

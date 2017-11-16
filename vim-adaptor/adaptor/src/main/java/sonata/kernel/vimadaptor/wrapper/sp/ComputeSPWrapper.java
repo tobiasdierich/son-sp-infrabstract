@@ -147,4 +147,8 @@ public class ComputeSPWrapper extends ComputeWrapper {
     // This Wrapper ignores this call
   }
 
+  @Override
+  public void removeImage(VnfImage image) {
+
+  }
 }
