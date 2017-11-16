@@ -4,6 +4,8 @@ import com.mitchellbosecke.pebble.error.PebbleException;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 
 public class TerraformWrapper {
@@ -26,16 +28,14 @@ public class TerraformWrapper {
      * @param command String
      * @return String
      */
-    public String runCmd(String command, boolean autoApprove) throws IOException, InterruptedException, TerraformException {
+    public String runCmd(String... command) throws IOException, InterruptedException, TerraformException {
         StringBuilder output = new StringBuilder();
 
         ProcessBuilder builder;
 
-        if (autoApprove) {
-            builder = new ProcessBuilder(TERRAFORM_LOCATION, command, "-auto-approve=true");
-        } else {
-            builder = new ProcessBuilder(TERRAFORM_LOCATION, command);
-        }
+        ArrayList<String> params = new ArrayList<>(Arrays.asList(command));
+        params.add(0, TERRAFORM_LOCATION);
+        builder = new ProcessBuilder(params);
 
         builder = builder.directory(new File(this.getServicePath()))
                 .redirectErrorStream(true);
@@ -56,7 +56,7 @@ public class TerraformWrapper {
         int exitCode = process.waitFor();
 
         if (exitCode > 0) {
-            String err = "[TerraformWrapper] Error while running terraform " + command + ": " + output;
+            String err = "[TerraformWrapper] Error while running terraform " + command[0] + ": " + output;
 
             throw new TerraformException(err);
         }
@@ -72,7 +72,7 @@ public class TerraformWrapper {
     public TerraformWrapper init() throws IOException, TerraformException, InterruptedException {
         Logger.info("[TerraformWrapper] Running terraform init for " + serviceId + "...");
 
-        this.runCmd("init", false);
+        this.runCmd("init");
 
         Logger.info("[TerraformWrapper] terraform init completed for " + serviceId + ".");
 
@@ -87,7 +87,7 @@ public class TerraformWrapper {
     public TerraformWrapper apply() throws IOException, TerraformException, InterruptedException {
         Logger.info("[TerraformWrapper] Running terraform apply for " + serviceId + "...");
 
-        this.runCmd("apply", true);
+        this.runCmd("apply", "-auto-approve");
 
         Logger.info("[TerraformWrapper] terraform apply completed for " + serviceId + ".");
 
@@ -102,7 +102,7 @@ public class TerraformWrapper {
     public TerraformWrapper destroy() throws IOException, TerraformException, InterruptedException {
         Logger.info("[TerraformWrapper] Running terraform destroy for " + serviceId + ".");
 
-        this.runCmd("destroy", true);
+        this.runCmd("destroy", "-force");
 
         Logger.info("[TerraformWrapper] Removing service data for " + serviceId + "...");
 
