@@ -70,11 +70,11 @@ public class TerraformWrapper {
      * @return this
      */
     public TerraformWrapper init() throws IOException, TerraformException, InterruptedException {
-        Logger.info("[TerraformWrapper] Running terraform init for" + serviceId + "...");
+        Logger.info("[TerraformWrapper] Running terraform init for " + serviceId + "...");
 
         this.runCmd("init", false);
 
-        Logger.info("[TerraformWrapper] terraform init completed for" + serviceId + ".");
+        Logger.info("[TerraformWrapper] terraform init completed for " + serviceId + ".");
 
         return this;
     }
@@ -85,11 +85,11 @@ public class TerraformWrapper {
      * @return this
      */
     public TerraformWrapper apply() throws IOException, TerraformException, InterruptedException {
-        Logger.info("[TerraformWrapper] Running terraform apply for" + serviceId + "...");
+        Logger.info("[TerraformWrapper] Running terraform apply for " + serviceId + "...");
 
         this.runCmd("apply", true);
 
-        Logger.info("[TerraformWrapper] terraform apply completed for" + serviceId + ".");
+        Logger.info("[TerraformWrapper] terraform apply completed for " + serviceId + ".");
 
         return this;
     }
@@ -100,7 +100,7 @@ public class TerraformWrapper {
      * @return this
      */
     public TerraformWrapper destroy() throws IOException, TerraformException, InterruptedException {
-        Logger.info("[TerraformWrapper] Running terraform destroy for" + serviceId + ".");
+        Logger.info("[TerraformWrapper] Running terraform destroy for " + serviceId + ".");
 
         this.runCmd("destroy", true);
 
@@ -109,7 +109,7 @@ public class TerraformWrapper {
         File serviceFolder = new File(this.getServicePath());
         serviceFolder.delete();
 
-        Logger.info("[TerraformWrapper] terraform destroy completed for" + serviceId + ".");
+        Logger.info("[TerraformWrapper] terraform destroy completed for " + serviceId + ".");
 
         return this;
     }

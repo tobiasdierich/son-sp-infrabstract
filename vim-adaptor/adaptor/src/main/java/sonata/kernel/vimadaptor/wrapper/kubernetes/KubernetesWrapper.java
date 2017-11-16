@@ -85,7 +85,7 @@ public class KubernetesWrapper extends ComputeWrapper {
 
     @Override
     public void deployCloudService(CloudServiceDeployPayload deployPayload, String sid) {
-        Logger.info("[KubernetesWrapper] Received deploy cloud service call.");
+        Logger.info("[KubernetesWrapper] Received deploy cloud service call for service " + deployPayload.getServiceInstanceId() + ".");
 
         TerraformTemplate template = null;
         Logger.info("[KubernetesWrapper] Building Kubernetes template for service instance " + deployPayload.getCsd().getInstanceUuid() + ".");
@@ -106,7 +106,7 @@ public class KubernetesWrapper extends ComputeWrapper {
         Logger.info("[KubernetesWrapper] Triggering terraform deployment.");
 
         try {
-            this.terraform.forService(deployPayload.getCsd().getInstanceUuid())
+            this.terraform.forService(deployPayload.getServiceInstanceId())
                     .writeTemplate(template, deployPayload.getCsd().getInstanceUuid())
                     .init()
                     .apply();
