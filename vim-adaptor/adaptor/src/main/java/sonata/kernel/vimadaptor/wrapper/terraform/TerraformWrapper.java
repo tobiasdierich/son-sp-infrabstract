@@ -2,6 +2,7 @@ package sonata.kernel.vimadaptor.wrapper.terraform;
 
 import com.mitchellbosecke.pebble.error.PebbleException;
 import org.slf4j.LoggerFactory;
+import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -107,7 +108,7 @@ public class TerraformWrapper {
         Logger.info("[TerraformWrapper] Removing service data for " + serviceId + "...");
 
         File serviceFolder = new File(this.getServicePath());
-        serviceFolder.delete();
+        FileUtils.deleteDirectory(serviceFolder);
 
         Logger.info("[TerraformWrapper] terraform destroy completed for " + serviceId + ".");
 

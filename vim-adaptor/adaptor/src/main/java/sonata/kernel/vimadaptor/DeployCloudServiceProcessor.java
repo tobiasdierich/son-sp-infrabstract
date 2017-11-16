@@ -130,7 +130,7 @@ public class DeployCloudServiceProcessor extends AbstractCallProcessor {
     }
 
     private void handleReceivedSuccessUpdate(WrapperStatusUpdate update) {
-        Logger.info("[DeployCloudServiceProcessor] Deploy of service " + this.getSid() + " succeeded.");
+        Logger.info("[DeployCloudServiceProcessor] Deploy of service succeeded.");
 
         ServicePlatformMessage response = new ServicePlatformMessage(update.getBody(),
                 "application/x-yaml", this.getMessage().getReplyTo(), this.getSid(), null);
