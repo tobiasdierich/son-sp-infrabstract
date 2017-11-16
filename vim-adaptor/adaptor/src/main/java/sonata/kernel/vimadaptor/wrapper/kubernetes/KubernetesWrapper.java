@@ -243,12 +243,12 @@ public class KubernetesWrapper extends ComputeWrapper {
                     .destroy();
         } catch (TerraformException e) {
             Logger.error(e.getMessage());
-            this.notifyDeploymentFailed(sid, "Failed to remove service using terraform.");
+            this.notifyRemoveFailed(sid, "Failed to remove service using terraform.");
 
             return false;
         } catch (Exception e) {
             Logger.error("[KubernetesWrapper] Failed to run terraform command: " +  e.getMessage());
-            this.notifyDeploymentFailed(sid, "Failed to remove service using terraform.");
+            this.notifyRemoveFailed(sid, "Failed to remove service using terraform.");
 
             return false;
         }
@@ -258,7 +258,30 @@ public class KubernetesWrapper extends ComputeWrapper {
 
         Logger.info("[KubernetesWrapper] Successfully removed service " + instanceUuid + ".");
 
+        this.notifyRemoveSuccessful(sid);
+
         return true;
+    }
+
+    /**
+     * Notify observers that the service removal was successful.
+     */
+    private void notifyRemoveSuccessful(String sid) {
+        String body =
+                "{\"status\":\"COMPLETED\",\"wrapper_uuid\":\"" + this.getConfig().getUuid() + "\"}";
+        WrapperStatusUpdate update = new WrapperStatusUpdate(sid, "SUCCESS", body);
+
+        this.notifyUpdate(update);
+    }
+
+    /**
+     * Notify observers that an error occurred while removing the service.
+     *
+     * @param error String
+     */
+    private void notifyRemoveFailed(String sid, String error) {
+        WrapperStatusUpdate update = new WrapperStatusUpdate(sid, "ERROR", error);
+        this.notifyUpdate(update);
     }
 
     @Override
