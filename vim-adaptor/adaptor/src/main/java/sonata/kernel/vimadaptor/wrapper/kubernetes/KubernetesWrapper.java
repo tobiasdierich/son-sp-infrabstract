@@ -235,7 +235,28 @@ public class KubernetesWrapper extends ComputeWrapper {
 
     @Override
     public boolean removeService(String instanceUuid, String callSid) {
-        Logger.info("[KubernetesWrapper] Received remove service call for instance " + instanceUuid);
+        Logger.info("[KubernetesWrapper] Received remove service call for service instance " + instanceUuid);
+
+        // Call terraform destroy
+        try {
+            this.terraform.forService(instanceUuid)
+                    .destroy();
+        } catch (TerraformException e) {
+            Logger.error(e.getMessage());
+            this.notifyDeploymentFailed(sid, "Failed to remove service using terraform.");
+
+            return false;
+        } catch (Exception e) {
+            Logger.error("[KubernetesWrapper] Failed to run terraform command: " +  e.getMessage());
+            this.notifyDeploymentFailed(sid, "Failed to remove service using terraform.");
+
+            return false;
+        }
+
+        Logger.info("[KubernetesWrapper] Removing DB entries for service.");
+        WrapperBay.getInstance().getVimRepo().removeServiceInstanceEntry(instanceUuid, this.getConfig().getUuid());
+
+        Logger.info("[KubernetesWrapper] Successfully removed service " + instanceUuid + ".");
 
         return true;
     }

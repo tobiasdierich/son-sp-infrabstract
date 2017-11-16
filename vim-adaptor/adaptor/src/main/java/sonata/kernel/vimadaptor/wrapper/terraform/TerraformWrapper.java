@@ -70,11 +70,11 @@ public class TerraformWrapper {
      * @return this
      */
     public TerraformWrapper init() throws IOException, TerraformException, InterruptedException {
-        Logger.info("[TerraformWrapper] Running terraform init...");
+        Logger.info("[TerraformWrapper] Running terraform init for" + serviceId + "...");
 
         this.runCmd("init", false);
 
-        Logger.info("[TerraformWrapper] terraform init completed.");
+        Logger.info("[TerraformWrapper] terraform init completed for" + serviceId + ".");
 
         return this;
     }
@@ -85,11 +85,31 @@ public class TerraformWrapper {
      * @return this
      */
     public TerraformWrapper apply() throws IOException, TerraformException, InterruptedException {
-        Logger.info("[TerraformWrapper] Running terraform apply...");
+        Logger.info("[TerraformWrapper] Running terraform apply for" + serviceId + "...");
 
         this.runCmd("apply", true);
 
-        Logger.info("[TerraformWrapper] terraform apply completed.");
+        Logger.info("[TerraformWrapper] terraform apply completed for" + serviceId + ".");
+
+        return this;
+    }
+
+    /**
+     * Run "terraform destroy"
+     *
+     * @return this
+     */
+    public TerraformWrapper destroy() throws IOException, TerraformException, InterruptedException {
+        Logger.info("[TerraformWrapper] Running terraform destroy for" + serviceId + ".");
+
+        this.runCmd("destroy", true);
+
+        Logger.info("[TerraformWrapper] Removing service data for " + serviceId + "...");
+
+        File serviceFolder = new File(this.getServicePath());
+        serviceFolder.delete();
+
+        Logger.info("[TerraformWrapper] terraform destroy completed for" + serviceId + ".");
 
         return this;
     }
@@ -104,7 +124,7 @@ public class TerraformWrapper {
     public TerraformWrapper writeTemplate(TerraformTemplate template, String instanceId) throws IOException, PebbleException {
         this.initialiseService(template);
 
-        Logger.info("[TerraformWrapper] Writing terraform config to " + this.getTerraformServiceConfigurationPath(instanceId));
+        Logger.info("[TerraformWrapper] Writing terraform service config to " + this.getTerraformServiceConfigurationPath(instanceId));
 
         BufferedWriter writer = new BufferedWriter(new FileWriter(this.getTerraformServiceConfigurationPath(instanceId)));
         writer.write(template.getServiceContent());
@@ -144,6 +164,8 @@ public class TerraformWrapper {
      * @param template TerraformTemplate
      */
     private void writeMainTemplate(TerraformTemplate template) throws IOException, PebbleException {
+        Logger.info("[TerraformWrapper] Writing terraform main config to " + this.getTerraformMainConfigurationPath());
+
         BufferedWriter writer = new BufferedWriter(new FileWriter(this.getTerraformMainConfigurationPath()));
         writer.write(template.getMainContent());
         writer.close();

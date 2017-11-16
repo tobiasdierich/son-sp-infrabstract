@@ -1150,7 +1150,6 @@ public class VimRepo {
     return out;
   }
 
-
   /**
    * Remove the wrapper identified by the specified UUID from the repository.
    * 
