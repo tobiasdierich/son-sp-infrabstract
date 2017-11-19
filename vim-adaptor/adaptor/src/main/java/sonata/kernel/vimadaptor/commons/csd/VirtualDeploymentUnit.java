@@ -27,6 +27,9 @@ public class VirtualDeploymentUnit {
     @JsonProperty("scale_in_out")
     private ScalingConfiguration scalingConfiguration;
 
+    @JsonProperty("environment")
+    private ArrayList<EnvironmentVariable> environmentVariables;
+
     public String getId() {
         return id;
     }
@@ -89,5 +92,13 @@ public class VirtualDeploymentUnit {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public ArrayList<EnvironmentVariable> getEnvironmentVariables() {
+        return environmentVariables != null ? environmentVariables : new ArrayList<EnvironmentVariable>();
+    }
+
+    public void setEnvironmentVariables(ArrayList<EnvironmentVariable> environmentVariables) {
+        this.environmentVariables = environmentVariables;
     }
 }

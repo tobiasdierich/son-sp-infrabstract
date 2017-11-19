@@ -41,6 +41,13 @@ resource "kubernetes_replication_controller" "{{ vdu.getName() }}-{{ serviceId }
               }
             }
         {% endif %}
+
+        {% for env in vdu.getEnvironmentVariables() %}
+          env {
+            name = "{{ env.getName() }}"
+            value = "{{ env.getValue() }}"
+          }
+        {% endfor %}
       }
     }
   }

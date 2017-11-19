@@ -3,6 +3,7 @@ package sonata.kernel.vimadaptor.commons.csr;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import sonata.kernel.vimadaptor.commons.VnfcInstance;
+import sonata.kernel.vimadaptor.commons.csd.EnvironmentVariable;
 import sonata.kernel.vimadaptor.commons.csd.Port;
 import sonata.kernel.vimadaptor.commons.csd.ResourceRequirements;
 import sonata.kernel.vimadaptor.commons.csd.ScalingConfiguration;
@@ -36,6 +37,9 @@ public class VduRecord {
 
     @JsonProperty("scale_in_out")
     private ScalingConfiguration scalingConfiguration;
+
+    @JsonProperty("environment")
+    private ArrayList<EnvironmentVariable> environmentVariables;
 
     public String getId() {
         return id;
@@ -107,5 +111,13 @@ public class VduRecord {
 
     public void setScalingConfiguration(ScalingConfiguration scalingConfiguration) {
         this.scalingConfiguration = scalingConfiguration;
+    }
+
+    public ArrayList<EnvironmentVariable> getEnvironmentVariables() {
+        return environmentVariables;
+    }
+
+    public void setEnvironmentVariables(ArrayList<EnvironmentVariable> environmentVariables) {
+        this.environmentVariables = environmentVariables;
     }
 }

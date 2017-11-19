@@ -49,6 +49,7 @@ public class ResponseHelper {
             vdur.setServiceType(vdu.getServiceType());
             vdur.setServicePorts(vdu.getServicePorts());
             vdur.setResourceRequirements(vdu.getResourceRequirements());
+            vdur.setEnvironmentVariables(vdu.getEnvironmentVariables());
             csr.addVdu(vdur);
         }
 
