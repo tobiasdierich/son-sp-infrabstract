@@ -19,6 +19,8 @@ public class TerraformClient {
 
     private String serviceId;
 
+    private String instanceId;
+
     public TerraformClient(String baseDir) {
         this.baseDir = baseDir;
     }
@@ -38,7 +40,7 @@ public class TerraformClient {
         params.add(0, TERRAFORM_LOCATION);
         builder = new ProcessBuilder(params);
 
-        builder = builder.directory(new File(this.getServicePath()))
+        builder = builder.directory(new File(this.getInstancePath(this.instanceId)))
                 .redirectErrorStream(true);
 
         Map<String, String> env = builder.environment();
@@ -68,14 +70,17 @@ public class TerraformClient {
     /**
      * Run "terraform init".
      *
+     * @param instanceId String
+     *
      * @return this
      */
-    public TerraformClient init() throws IOException, TerraformException, InterruptedException {
-        Logger.info("[TerraformClient] Running terraform init for " + serviceId + "...");
+    public TerraformClient init(String instanceId) throws IOException, TerraformException, InterruptedException {
+        Logger.info("[TerraformClient] Running terraform init for " + serviceId + "/" + instanceId + "...");
 
-        this.runCmd("init");
+        this.forInstance(instanceId)
+                .runCmd("init");
 
-        Logger.info("[TerraformClient] terraform init completed for " + serviceId + ".");
+        Logger.info("[TerraformClient] terraform init completed for " + serviceId + "/" + instanceId + ".");
 
         return this;
     }
@@ -83,34 +88,55 @@ public class TerraformClient {
     /**
      * Run "terraform apply".
      *
+     * @param instanceId String
+     *
      * @return this
      */
-    public TerraformClient apply() throws IOException, TerraformException, InterruptedException {
-        Logger.info("[TerraformClient] Running terraform apply for " + serviceId + "...");
+    public TerraformClient apply(String instanceId) throws IOException, TerraformException, InterruptedException {
+        Logger.info("[TerraformClient] Running terraform apply for " + serviceId + "/" + instanceId + "...");
 
-        this.runCmd("apply", "-auto-approve");
+        this.forInstance(instanceId)
+                .runCmd("apply", "-auto-approve");
 
-        Logger.info("[TerraformClient] terraform apply completed for " + serviceId + ".");
+        Logger.info("[TerraformClient] terraform apply completed for " + serviceId + "/" + instanceId + ".");
 
         return this;
     }
 
     /**
-     * Run "terraform destroy"
+     * Run "terraform destroy".
+     *
+     * @param instanceId String
+     *
+     * @return this
+     */
+    public TerraformClient destroy(String instanceId) throws IOException, TerraformException, InterruptedException {
+        Logger.info("[TerraformClient] Running terraform destroy for " + serviceId + "/" + instanceId + ".");
+
+        this.forInstance(instanceId)
+                .runCmd("destroy", "-force");
+
+        Logger.info("[TerraformClient] Removing service data for " + serviceId + "/" + instanceId + "...");
+
+        File serviceFolder = new File(this.getInstancePath(instanceId));
+        FileUtils.deleteDirectory(serviceFolder);
+
+        Logger.info("[TerraformClient] terraform destroy completed for " + serviceId + "/" + instanceId + ".");
+
+        return this;
+    }
+
+    /**
+     * Run "terraform destroy".
      *
      * @return this
      */
     public TerraformClient destroy() throws IOException, TerraformException, InterruptedException {
-        Logger.info("[TerraformClient] Running terraform destroy for " + serviceId + ".");
+        File[] directories = new File(this.getServicePath()).listFiles(File::isDirectory);
 
-        this.runCmd("destroy", "-force");
-
-        Logger.info("[TerraformClient] Removing service data for " + serviceId + "...");
-
-        File serviceFolder = new File(this.getServicePath());
-        FileUtils.deleteDirectory(serviceFolder);
-
-        Logger.info("[TerraformClient] terraform destroy completed for " + serviceId + ".");
+        for (File directory : directories) {
+            this.destroy(directory.getName());
+        }
 
         return this;
     }
@@ -123,7 +149,7 @@ public class TerraformClient {
      * @return this
      */
     public TerraformClient writeTemplate(TerraformTemplate template, String instanceId) throws IOException, PebbleException {
-        this.initialiseService(template);
+        this.initialiseService(template, instanceId);
 
         Logger.info("[TerraformClient] Writing terraform service config to " + this.getTerraformServiceConfigurationPath(instanceId));
 
@@ -148,14 +174,27 @@ public class TerraformClient {
     }
 
     /**
+     * Set the instance id.
+     *
+     * @param instanceId String
+     *
+     * @return TerraformClient
+     */
+    public TerraformClient forInstance(String instanceId) {
+        this.instanceId = instanceId;
+
+        return this;
+    }
+
+    /**
      * Initialise the terraform project if it has not been initialised yet.
      */
-    private void initialiseService(TerraformTemplate template) throws IOException, PebbleException {
-        this.createFoldersIfNotExist();
+    private void initialiseService(TerraformTemplate template, String instanceId) throws IOException, PebbleException {
+        this.createFoldersIfNotExist(instanceId);
 
-        File mainConfig = new File(this.getTerraformMainConfigurationPath());
+        File mainConfig = new File(this.getTerraformMainConfigurationPath(instanceId));
         if (!mainConfig.exists() && template.getMainContent() != null) {
-            this.writeMainTemplate(template);
+            this.writeMainTemplate(template, instanceId);
         }
     }
 
@@ -163,20 +202,23 @@ public class TerraformClient {
      * Write the content of the main terraform template.
      *
      * @param template TerraformTemplate
+     * @param instanceId String
      */
-    private void writeMainTemplate(TerraformTemplate template) throws IOException, PebbleException {
-        Logger.info("[TerraformClient] Writing terraform main config to " + this.getTerraformMainConfigurationPath());
+    private void writeMainTemplate(TerraformTemplate template, String instanceId) throws IOException, PebbleException {
+        Logger.info("[TerraformClient] Writing terraform main config to " + this.getTerraformMainConfigurationPath(instanceId));
 
-        BufferedWriter writer = new BufferedWriter(new FileWriter(this.getTerraformMainConfigurationPath()));
+        BufferedWriter writer = new BufferedWriter(new FileWriter(this.getTerraformMainConfigurationPath(instanceId)));
         writer.write(template.getMainContent());
         writer.close();
     }
 
     /**
      * Create any directories that do not exist.
+     *
+     * @param instanceId String
      */
-    private void createFoldersIfNotExist() {
-        File servicePath = new File(this.getServicePath());
+    private void createFoldersIfNotExist(String instanceId) {
+        File servicePath = new File(this.getInstancePath(instanceId));
 
         if (!servicePath.isDirectory()) {
             servicePath.mkdirs();
@@ -193,12 +235,23 @@ public class TerraformClient {
     }
 
     /**
+     * Get the instance path.
+     *
+     * @param instanceId String
+     *
+     * @return String
+     */
+    private String getInstancePath(String instanceId) {
+        return this.getServicePath() + instanceId + File.separator;
+    }
+
+    /**
      * Get the path to the main configuration file.
      *
      * @return String
      */
-    private String getTerraformMainConfigurationPath() {
-        return this.getServicePath() + "main.tf";
+    private String getTerraformMainConfigurationPath(String instanceId) {
+        return this.getInstancePath(instanceId) + "main.tf";
     }
 
     /**
@@ -209,6 +262,6 @@ public class TerraformClient {
      * @return String
      */
     private String getTerraformServiceConfigurationPath(String instanceId) {
-        return this.getServicePath() + instanceId + ".tf";
+        return this.getInstancePath(instanceId) + "service.tf";
     }
 }

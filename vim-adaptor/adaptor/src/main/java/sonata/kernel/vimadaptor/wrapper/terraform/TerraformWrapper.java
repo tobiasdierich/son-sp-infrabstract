@@ -58,8 +58,8 @@ abstract public class TerraformWrapper extends ComputeWrapper {
         try {
             this.terraform.forService(deployPayload.getServiceInstanceId())
                     .writeTemplate(template, deployPayload.getCsd().getInstanceUuid())
-                    .init()
-                    .apply();
+                    .init(deployPayload.getCsd().getInstanceUuid())
+                    .apply(deployPayload.getCsd().getInstanceUuid());
         } catch (TerraformException e) {
             Logger.error(e.getMessage());
             this.notifyCloudServiceDeploymentFailed(sid, "Failed to deploy service using terraform.");
