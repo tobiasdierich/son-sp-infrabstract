@@ -23,7 +23,7 @@ abstract public class TerraformWrapper extends ComputeWrapper {
     public TerraformWrapper(WrapperConfiguration config) {
         super(config);
 
-        this.terraform = new TerraformClient("/root/terraform_data");
+        this.terraform = new TerraformClient("/root/terraform_data/");
     }
 
     public void deployFunction(FunctionDeployPayload data, String sid) {
