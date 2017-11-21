@@ -16,7 +16,7 @@ public class KubernetesTerraformTemplate extends TerraformTemplate {
 
     private WrapperConfiguration wrapper;
 
-    private String serviceId;
+    private String serviceInstanceId;
 
     @Override
     public String getMainTemplate() {
@@ -31,7 +31,8 @@ public class KubernetesTerraformTemplate extends TerraformTemplate {
     @Override
     public Map<String, Object> getContext() {
         Map<String, Object> context = new HashMap<>();
-        context.put("serviceId", this.serviceId);
+        context.put("serviceId", this.csd.getInstanceUuid());
+        context.put("serviceInstanceId", this.serviceInstanceId);
         context.put("csd", this.csd);
         context.put("endpoint", String.format("https://%s", wrapper.getVimEndpoint()));
         context.put("token", wrapper.getAuthPass());
@@ -52,8 +53,8 @@ public class KubernetesTerraformTemplate extends TerraformTemplate {
         return this;
     }
 
-    public KubernetesTerraformTemplate forService(String serviceId) {
-        this.serviceId = serviceId;
+    public KubernetesTerraformTemplate forService(String serviceInstanceId) {
+        this.serviceInstanceId = serviceInstanceId;
 
         return this;
     }

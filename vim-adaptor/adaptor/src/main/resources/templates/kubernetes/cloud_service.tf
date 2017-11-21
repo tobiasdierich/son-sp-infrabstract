@@ -3,13 +3,15 @@ resource "kubernetes_replication_controller" "{{ vdu.getName() }}-{{ serviceId }
   metadata {
     name = "{{ vdu.getName() }}-{{ serviceId }}"
     labels {
-      app = "{{ vdu.getId() }}"
+      service = "{{ serviceInstanceId }}"
+      vdu = "{{ vdu.getId() }}"
     }
   }
 
   spec {
     selector {
-      app = "{{ vdu.getId() }}"
+      service = "{{ serviceInstanceId }}"
+      vdu = "{{ vdu.getId() }}"
     }
     template {
       container {
@@ -56,10 +58,15 @@ resource "kubernetes_replication_controller" "{{ vdu.getName() }}-{{ serviceId }
 resource "kubernetes_service" "{{ vdu.getName() }}-{{ serviceId }}" {
   metadata {
     name = "{{ vdu.getName() }}-{{ serviceId }}"
+
+    labels {
+      service = "{{ serviceInstanceId }}"
+      vdu = "{{ vdu.getId() }}"
+    }
   }
   spec {
     selector {
-      app = "${kubernetes_replication_controller.{{ vdu.getName() }}-{{ serviceId }}.metadata.0.labels.app}"
+      vdu = "${kubernetes_replication_controller.{{ vdu.getName() }}-{{ serviceId }}.metadata.0.labels.vdu}"
     }
 
     {% for port in vdu.getServicePorts() %}
@@ -82,6 +89,11 @@ resource "kubernetes_service" "{{ vdu.getName() }}-{{ serviceId }}" {
 resource "kubernetes_horizontal_pod_autoscaler" "{{ vdu.getName() }}-{{ serviceId }}" {
   metadata {
     name = "{{ vdu.getName() }}-{{ serviceId }}"
+
+    labels {
+      service = "{{ serviceInstanceId }}"
+      vdu = "{{ vdu.getId() }}"
+    }
   }
   spec {
     max_replicas = {{ vdu.getScalingConfiguration().getMaximum() }}

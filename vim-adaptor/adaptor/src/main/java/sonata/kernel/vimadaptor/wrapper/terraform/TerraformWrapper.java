@@ -41,7 +41,7 @@ abstract public class TerraformWrapper extends ComputeWrapper {
         Logger.info(this.buildLogMessage("Building Kubernetes template for service instance " + deployPayload.getCsd().getInstanceUuid() + "."));
         try {
             template = new KubernetesTerraformTemplate()
-                    .forService(deployPayload.getCsd().getInstanceUuid())
+                    .forService(deployPayload.getServiceInstanceId())
                     .withCsd(deployPayload.getCsd())
                     .withWrapperConfiguration(this.getConfig())
                     .build();
