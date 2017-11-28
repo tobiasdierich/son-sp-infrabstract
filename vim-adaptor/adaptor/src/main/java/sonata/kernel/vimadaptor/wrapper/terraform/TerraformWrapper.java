@@ -103,6 +103,7 @@ abstract public class TerraformWrapper extends ComputeWrapper {
         // Call terraform destroy
         try {
             this.terraform.forService(instanceUuid)
+                    .init()
                     .destroy();
         } catch (TerraformException e) {
             Logger.error(e.getMessage());

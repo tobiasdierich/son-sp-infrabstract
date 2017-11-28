@@ -86,6 +86,21 @@ public class TerraformClient {
     }
 
     /**
+     * Run "terraform destroy".
+     *
+     * @return this
+     */
+    public TerraformClient init() throws IOException, TerraformException, InterruptedException {
+        File[] directories = new File(this.getServicePath()).listFiles(File::isDirectory);
+
+        for (File directory : directories) {
+            this.init(directory.getName());
+        }
+
+        return this;
+    }
+
+    /**
      * Run "terraform apply".
      *
      * @param instanceId String
