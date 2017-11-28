@@ -1,7 +1,7 @@
 {% for vdu in csd.getVirtualDeploymentUnits() %}
 resource "kubernetes_replication_controller" "{{ vdu.getName() }}-{{ serviceId }}" {
   metadata {
-    name = "{{ vdu.getName() }}-{{ serviceId }}"
+    name = "{{ vdu.getName() }}-{{ serviceInstanceId }}"
     labels {
       service = "{{ serviceInstanceId }}"
       vdu = "{{ vdu.getId() }}"
@@ -16,7 +16,7 @@ resource "kubernetes_replication_controller" "{{ vdu.getName() }}-{{ serviceId }
     template {
       container {
         image = "{{ vdu.getServiceImage() }}"
-        name  = "{{ vdu.getName() }}-{{ serviceId }}"
+        name  = "{{ vdu.getName() }}-{{ serviceInstanceId }}"
 
         {% for port in vdu.getServicePorts() %}
         port {
@@ -57,7 +57,7 @@ resource "kubernetes_replication_controller" "{{ vdu.getName() }}-{{ serviceId }
 
 resource "kubernetes_service" "{{ vdu.getName() }}-{{ serviceId }}" {
   metadata {
-    name = "{{ vdu.getName() }}-{{ serviceId }}"
+    name = "{{ vdu.getName() }}-{{ serviceInstanceId }}"
 
     labels {
       service = "{{ serviceInstanceId }}"
@@ -88,7 +88,7 @@ resource "kubernetes_service" "{{ vdu.getName() }}-{{ serviceId }}" {
 
 resource "kubernetes_horizontal_pod_autoscaler" "{{ vdu.getName() }}-{{ serviceId }}" {
   metadata {
-    name = "{{ vdu.getName() }}-{{ serviceId }}"
+    name = "{{ vdu.getName() }}-{{ serviceInstanceId }}"
 
     labels {
       service = "{{ serviceInstanceId }}"
