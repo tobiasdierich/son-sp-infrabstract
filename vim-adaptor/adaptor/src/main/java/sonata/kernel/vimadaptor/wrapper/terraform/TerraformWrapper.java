@@ -1,10 +1,12 @@
 package sonata.kernel.vimadaptor.wrapper.terraform;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.mitchellbosecke.pebble.error.PebbleException;
 import org.slf4j.LoggerFactory;
 import sonata.kernel.vimadaptor.commons.*;
 import sonata.kernel.vimadaptor.wrapper.*;
-import sonata.kernel.vimadaptor.wrapper.kubernetes.KubernetesTerraformTemplate;
+
+import java.io.IOException;
 
 abstract public class TerraformWrapper extends ComputeWrapper {
 
@@ -40,11 +42,7 @@ abstract public class TerraformWrapper extends ComputeWrapper {
         TerraformTemplate template = null;
         Logger.info(this.buildLogMessage("Building Kubernetes template for service instance " + deployPayload.getCsd().getInstanceUuid() + "."));
         try {
-            template = new KubernetesTerraformTemplate()
-                    .forService(deployPayload.getServiceInstanceId())
-                    .withCsd(deployPayload.getCsd())
-                    .withWrapperConfiguration(this.getConfig())
-                    .build();
+            template = this.buildTemplate(deployPayload);
         } catch (Exception e) {
             Logger.error(this.buildLogMessage("Failed to build template: " + e.getMessage()));
             this.notifyCloudServiceDeploymentFailed(sid, "Failed to build template");
@@ -209,6 +207,15 @@ abstract public class TerraformWrapper extends ComputeWrapper {
 
     @Override
     public abstract ResourceUtilisation getResourceUtilisation();
+
+    /**
+     * Build the terraform deployment template.
+     *
+     * @param data CloudServiceDeployPayload
+     *
+     * @return TerraformTemplate
+     */
+    public abstract TerraformTemplate buildTemplate(CloudServiceDeployPayload data) throws IOException, PebbleException;
 
     /**
      * Get the deploy response from the deploy payload.

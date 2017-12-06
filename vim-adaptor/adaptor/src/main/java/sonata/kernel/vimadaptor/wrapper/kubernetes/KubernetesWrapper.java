@@ -26,24 +26,18 @@
 
 package sonata.kernel.vimadaptor.wrapper.kubernetes;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.mitchellbosecke.pebble.error.PebbleException;
 import org.slf4j.LoggerFactory;
 
 import sonata.kernel.vimadaptor.commons.*;
-import sonata.kernel.vimadaptor.wrapper.ComputeWrapper;
 import sonata.kernel.vimadaptor.wrapper.ResourceUtilisation;
-import sonata.kernel.vimadaptor.wrapper.WrapperBay;
 import sonata.kernel.vimadaptor.wrapper.WrapperConfiguration;
-import sonata.kernel.vimadaptor.wrapper.WrapperStatusUpdate;
 
 import io.fabric8.kubernetes.api.model.NodeList;
-import sonata.kernel.vimadaptor.wrapper.terraform.TerraformClient;
-import sonata.kernel.vimadaptor.wrapper.terraform.TerraformException;
 import sonata.kernel.vimadaptor.wrapper.terraform.TerraformTemplate;
 import sonata.kernel.vimadaptor.wrapper.terraform.TerraformWrapper;
 
 import java.io.IOException;
-import java.util.Random;
 
 
 public class KubernetesWrapper extends TerraformWrapper {
@@ -90,6 +84,15 @@ public class KubernetesWrapper extends TerraformWrapper {
         }
 
         return resourceUtilisation;
+    }
+
+    @Override
+    public TerraformTemplate buildTemplate(CloudServiceDeployPayload data) throws IOException, PebbleException {
+        return new KubernetesTerraformTemplate()
+                .forService(data.getServiceInstanceId())
+                .withCsd(data.getCsd())
+                .withWrapperConfiguration(this.getConfig())
+                .build();
     }
 
     /**
