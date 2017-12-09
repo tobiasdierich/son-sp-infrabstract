@@ -1,7 +1,7 @@
 {% for vdu in csd.getVirtualDeploymentUnits() %}
-resource "kubernetes_replication_controller" "{{ vdu.getName() }}-{{ serviceId }}" {
+resource "kubernetes_replication_controller" "{{ vdu.getId() }}-{{ serviceId }}" {
   metadata {
-    name = "{{ vdu.getName() }}-{{ serviceId }}"
+    name = "{{ vdu.getId() }}-{{ serviceId }}"
     labels {
       service = "{{ serviceInstanceId }}"
       vdu = "{{ vdu.getId() }}"
@@ -16,7 +16,7 @@ resource "kubernetes_replication_controller" "{{ vdu.getName() }}-{{ serviceId }
     template {
       container {
         image = "{{ vdu.getServiceImage() }}"
-        name  = "{{ vdu.getName() }}-{{ serviceInstanceId }}"
+        name  = "{{ vdu.getId() }}-{{ serviceInstanceId }}"
 
         {% for port in vdu.getServicePorts() %}
         port {
@@ -55,9 +55,9 @@ resource "kubernetes_replication_controller" "{{ vdu.getName() }}-{{ serviceId }
   }
 }
 
-resource "kubernetes_service" "{{ vdu.getName() }}-{{ serviceId }}" {
+resource "kubernetes_service" "{{ vdu.getId() }}-{{ serviceId }}" {
   metadata {
-    name = "{{ vdu.getName() }}-{{ serviceId }}"
+    name = "{{ vdu.getId() }}-{{ serviceId }}"
 
     labels {
       service = "{{ serviceInstanceId }}"
@@ -66,7 +66,7 @@ resource "kubernetes_service" "{{ vdu.getName() }}-{{ serviceId }}" {
   }
   spec {
     selector {
-      vdu = "${kubernetes_replication_controller.{{ vdu.getName() }}-{{ serviceId }}.metadata.0.labels.vdu}"
+      vdu = "${kubernetes_replication_controller.{{ vdu.getId() }}-{{ serviceId }}.metadata.0.labels.vdu}"
     }
 
     {% for port in vdu.getServicePorts() %}
@@ -86,9 +86,9 @@ resource "kubernetes_service" "{{ vdu.getName() }}-{{ serviceId }}" {
   }
 }
 
-resource "kubernetes_horizontal_pod_autoscaler" "{{ vdu.getName() }}-{{ serviceId }}" {
+resource "kubernetes_horizontal_pod_autoscaler" "{{ vdu.getId() }}-{{ serviceId }}" {
   metadata {
-    name = "{{ vdu.getName() }}-{{ serviceId }}"
+    name = "{{ vdu.getId() }}-{{ serviceId }}"
 
     labels {
       service = "{{ serviceInstanceId }}"
@@ -100,7 +100,7 @@ resource "kubernetes_horizontal_pod_autoscaler" "{{ vdu.getName() }}-{{ serviceI
     min_replicas = {{ vdu.getScalingConfiguration().getMinimum() }}
     scale_target_ref {
       kind = "ReplicationController"
-      name = "${kubernetes_replication_controller.{{ vdu.getName() }}-{{ serviceId }}.metadata.0.name}"
+      name = "${kubernetes_replication_controller.{{ vdu.getId() }}-{{ serviceId }}.metadata.0.name}"
     }
   }
 }
