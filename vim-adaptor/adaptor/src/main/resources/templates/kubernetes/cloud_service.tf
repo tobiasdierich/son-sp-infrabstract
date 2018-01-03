@@ -90,6 +90,7 @@ resource "kubernetes_service" "{{ vdu.getId() }}-{{ serviceId }}" {
   }
 }
 
+{% if vdu.getScalingConfiguration() != null %}
 resource "kubernetes_horizontal_pod_autoscaler" "{{ vdu.getId() }}-{{ serviceId }}" {
   metadata {
     name = "{{ vdu.getId() }}-{{ serviceId }}"
@@ -108,4 +109,5 @@ resource "kubernetes_horizontal_pod_autoscaler" "{{ vdu.getId() }}-{{ serviceId 
     }
   }
 }
+{% endif %}
 {% endfor %}
