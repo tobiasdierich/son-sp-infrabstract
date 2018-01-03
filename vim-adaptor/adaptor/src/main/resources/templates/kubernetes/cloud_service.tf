@@ -86,7 +86,7 @@ resource "kubernetes_service" "{{ vdu.getId() }}-{{ serviceId }}" {
     }
     {% endfor %}
 
-    type = "LoadBalancer"
+    type = "{{ vdu.getServiceType() }}"
   }
 }
 
