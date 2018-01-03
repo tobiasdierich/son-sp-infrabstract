@@ -63,7 +63,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Properties;
 
-
 public class OvsWrapper extends NetworkWrapper {
 
   private static final String ADAPTOR_SEGMENTS_CONF = "/adaptor/segments.conf";

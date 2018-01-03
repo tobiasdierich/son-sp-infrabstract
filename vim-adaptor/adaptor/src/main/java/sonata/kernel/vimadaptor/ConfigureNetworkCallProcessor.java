@@ -74,17 +74,9 @@ public class ConfigureNetworkCallProcessor extends AbstractCallProcessor {
    */
   @Override
   public boolean process(ServicePlatformMessage message) {
-
     data = null;
     ObjectMapper mapper = SonataManifestMapper.getSonataMapper();
-    // ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-    // SimpleModule module = new SimpleModule();
-    // module.addDeserializer(Unit.class, new UnitDeserializer());
-    // //module.addDeserializer(VmFormat.class, new VmFormatDeserializer());
-    // //module.addDeserializer(ConnectionPointType.class, new ConnectionPointTypeDeserializer());
-    // mapper.registerModule(module);
-    // mapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
-    // mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+
     try {
       data = mapper.readValue(message.getBody(), NetworkConfigurePayload.class);
       Logger.info("payload parsed");
@@ -96,6 +88,7 @@ public class ConfigureNetworkCallProcessor extends AbstractCallProcessor {
           message.getReplyTo(), message.getSid(), null));
       return false;
     }
+
     String serviceInstaceId = data.getServiceInstanceId();
     Logger.info("Received networking.configure call for service instance " + serviceInstaceId);
     ServiceDescriptor nsd = data.getNsd();
@@ -178,10 +171,6 @@ public class ConfigureNetworkCallProcessor extends AbstractCallProcessor {
           }
         }
 
-
-        // Logger.debug("subgraph data structure:");
-        // Logger.debug(netVim2SubGraphMap.toString());
-
         for (String netVimUuid : netVim2SubGraphMap.keySet()) {
           ArrayList<VnfDescriptor> descriptorsSublist = new ArrayList<VnfDescriptor>();
           ArrayList<VnfRecord> recordsSublist = new ArrayList<VnfRecord>();
@@ -215,14 +204,6 @@ public class ConfigureNetworkCallProcessor extends AbstractCallProcessor {
           wrapperPayload.setVnfrs(recordsSublist);
           wrapperPayload.setServiceInstanceId(serviceInstaceId);
           wrapperPayload.setNap(data.getNap());
-
-          // try {
-          // Logger.debug("Partial configuration for PoP "+netVimUuid+":");
-          // Logger.debug(mapper.writeValueAsString(wrapperPayload));
-          // } catch (JsonProcessingException e1) {
-          // // TODO Auto-generated catch block
-          // e1.printStackTrace();
-          // }
 
           NetworkWrapper netWr = (NetworkWrapper) WrapperBay.getInstance().getWrapper(netVimUuid);
           try {

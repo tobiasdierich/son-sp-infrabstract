@@ -57,7 +57,11 @@ resource "kubernetes_replication_controller" "{{ vdu.getId() }}-{{ serviceId }}"
 
 resource "kubernetes_service" "{{ vdu.getId() }}-{{ serviceId }}" {
   metadata {
-    name = "{{ vdu.getId() }}-{{ serviceId }}"
+    {% if vdu.getName() != null %}
+      name = "{{ vdu.getName() }}"
+    {% else %}
+      name = "{{ vdu.getId() }}-{{ serviceId }}"
+    {% endif %}
 
     labels {
       service = "{{ serviceInstanceId }}"
