@@ -158,14 +158,15 @@ public class JavaStackCore {
       Orchestration.VERSION = VERSION;
     }
   }
-  private static class SingeltonJavaStackCoreHelper {
-    private static final JavaStackCore _javaStackCore = new JavaStackCore();
-  }
+
+  // private static class SingeltonJavaStackCoreHelper {
+  // private static final JavaStackCore _javaStackCore = new JavaStackCore();
+  // }
 
   private static final org.slf4j.Logger Logger = LoggerFactory.getLogger(JavaStackCore.class);
 
   public static JavaStackCore getJavaStackCore() {
-    return SingeltonJavaStackCoreHelper._javaStackCore;
+    return new JavaStackCore();
   }
 
   private String endpoint;
@@ -182,13 +183,13 @@ public class JavaStackCore {
 
   private String projectName;
 
-  private String tenantName;
-
 
 
   private String token_id;
 
   private String username;
+  
+  private String domain;
 
   private JavaStackCore() {}
 
@@ -229,8 +230,10 @@ public class JavaStackCore {
 
       mapper = new ObjectMapper();
 
-      AuthenticationData auth = mapper.readValue(
-          JavaStackUtils.convertHttpResponseToString(response), AuthenticationData.class);
+      String httpResponseString = JavaStackUtils.convertHttpResponseToString(response);
+      Logger.debug("[JavaStack] Authentication response body:");
+      Logger.debug(httpResponseString);
+      AuthenticationData auth = mapper.readValue(httpResponseString, AuthenticationData.class);
 
       this.token_id = auth.getAccess().getToken().getId();
       this.projectId = auth.getAccess().getToken().getTenant().getId();
@@ -264,30 +267,24 @@ public class JavaStackCore {
 
       post = new HttpPost(buildUrl.toString());
       String body = String.format(
-          "{\n" +
-                  "    \"auth\": {\n" +
-                  "        \"identity\": {\n" +
-                  "            \"methods\": [\n" +
-                  "                \"password\"\n" +
-                  "            ],\n" +
-                  "            \"password\": {\n" +
-                  "                \"user\": {\n" +
-                  "                \t\"name\": \"%s\",\n" +
-                  "                \t\"domain\": {\n" +
-                  "                        \"name\": \"%s\"\n" +
-                  "                    },\n" +
-                  "                    \"password\": \"%s\"\n" +
-                  "                }\n" +
-                  "            }\n" +
-                  "        },\n" +
-                  "        \"scope\": {\n" +
-                  "        \t\"project\": {\n" +
-                  "                \"id\": \"%s\"\n" +
-                  "            }\n" +
-                  "        }\n" +
-                  "    }\n" +
-                  "}",
-          this.username, "default", this.password, this.tenantName);
+        "{\n" + "    \"auth\": {\n" 
+              + "        \"identity\": {\n" 
+              + "            \"methods\": [\n"
+              + "                \"password\"\n" 
+              + "            ],\n"
+              + "            \"password\": {\n" 
+              + "                \"user\": {\n"
+              + "                    \"name\": \"%s\",\n" 
+              + "                    \"domain\": {\n"
+              + "                        \"name\": \"%s\"\n" 
+              + "                    },\n"
+              + "                    \"password\": \"%s\"\n" 
+              + "                }\n"
+              + "            }\n" 
+              + "        }\n" 
+              + "    }\n" 
+              + "}",
+          this.username, this.domain, this.password);
 
       post.setEntity(new StringEntity(body, ContentType.APPLICATION_JSON));
 
@@ -297,13 +294,18 @@ public class JavaStackCore {
 
       response = httpClient.execute(post);
 
+      Logger.debug("[JavaStack] Authentication response:");
+      Logger.debug(response.toString());
+
       if (response.containsHeader("X-Subject-Token")) {
         this.token_id = response.getFirstHeader("X-Subject-Token").getValue();
       }
 
       mapper = new ObjectMapper();
-      AuthenticationDataV3 auth = mapper.readValue(
-          JavaStackUtils.convertHttpResponseToString(response), AuthenticationDataV3.class);
+      String httpResponseString = JavaStackUtils.convertHttpResponseToString(response);
+      Logger.debug("[JavaStack] Authentication response body:");
+      Logger.debug(httpResponseString);
+      AuthenticationDataV3 auth = mapper.readValue(httpResponseString, AuthenticationDataV3.class);
 
       ArrayList<CatalogItem> catalogItems = auth.getToken().getCatalog();
       for (CatalogItem catalogItem : catalogItems) {
@@ -314,11 +316,13 @@ public class JavaStackCore {
           if (endpointItem.getIface().equals("public")) {
             String[] path_port = endpointItem.getUrl().split(":");;
             String[] path = path_port[2].split("/");
-            String version, port;
+            String version = "";
+	    String port;
 
             switch (type) {
               case "identity":
                 port = path[0];
+		if (path.length > 1)
                 version = path[1];
                 Identity.setPORT(port);
                 Identity.setVERSION(version);
@@ -326,6 +330,7 @@ public class JavaStackCore {
 
               case "orchestration":
                 port = path[0];
+		if (path.length > 1)
                 version = path[1];
                 Orchestration.setPORT(port);
                 Orchestration.setVERSION(version);
@@ -340,6 +345,7 @@ public class JavaStackCore {
 
               case "compute":
                 port = path[0];
+		if (path.length > 1)
                 version = path[1];
                 Compute.setPORT(port);
                 Compute.setVERSION(version);
@@ -358,8 +364,9 @@ public class JavaStackCore {
         }
       }
 
-      if(auth.getToken().getProject()==null){
-        throw new IOException("Authentication response doesn't contain Project ID. SONATA VIM-Adaptor can't work with this Keystone configuration.");
+      if (auth.getToken().getProject() == null) {
+        throw new IOException(
+            "Authentication response doesn't contain Project ID. SONATA VIM-Adaptor can't work with this Keystone configuration.");
       }
       this.projectId = auth.getToken().getProject().getId();
       Logger.debug("[JavaStack] ProjectId set to " + projectId);
@@ -616,6 +623,10 @@ public class JavaStackCore {
     return this.username;
   }
 
+  public String getDomain() {
+    return this.domain;
+  }
+
   /**
    * NOVA method to list compute flavors
    *
@@ -718,9 +729,13 @@ public class JavaStackCore {
       buildUrl.append(":");
       buildUrl.append(Image.getPORT());
       buildUrl.append(String.format("/%s/images", Image.getVERSION()));
+      buildUrl.append("?limit=100");
 
       listImages = new HttpGet(buildUrl.toString());
       listImages.addHeader(Constants.AUTHTOKEN_HEADER.toString(), this.token_id);
+
+      Logger.debug("URL request:");
+      Logger.debug(buildUrl.toString());
 
       Logger.debug("HTTP request:");
       Logger.debug(listImages.toString());
@@ -851,8 +866,8 @@ public class JavaStackCore {
     this.username = username;
   }
 
-  public void setTenantName(String tenantName) {
-      this.tenantName = tenantName;
+  public void setDomain(String domain) {
+    this.domain = domain;
   }
 
   /**
