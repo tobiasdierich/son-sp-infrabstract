@@ -77,7 +77,7 @@ public class AddVimCallProcessor extends AbstractCallProcessor {
     String authUser = jsonObject.optString("username", "");
     String authPass = jsonObject.getString("pass");
     String city = jsonObject.getString("city");
-    String domain = jsonObject.getString("domain");
+    String domain = jsonObject.optString("domain", "");
     String name = jsonObject.getString("name");
     String country = jsonObject.getString("country");
     String configuration = jsonObject.getJSONObject("configuration").toString();
