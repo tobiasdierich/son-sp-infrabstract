@@ -26,6 +26,9 @@ public class VduRecord {
     @JsonProperty("service_image")
     private String serviceImage;
 
+    @JsonProperty("service_name")
+    private String serviceName;
+
     @JsonProperty("service_type")
     private String serviceType;
 
@@ -87,6 +90,14 @@ public class VduRecord {
 
     public void setServiceImage(String serviceImage) {
         this.serviceImage = serviceImage;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
     }
 
     public String getServiceType() {

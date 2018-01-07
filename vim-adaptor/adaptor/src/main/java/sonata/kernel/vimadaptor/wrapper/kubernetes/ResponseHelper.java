@@ -46,6 +46,7 @@ public class ResponseHelper {
             vdur.setVduReference(csd.getName() + ":" + vdu.getId());
             vdur.setVimId(this.wrapper.getUuid());
             vdur.setServiceImage(vdu.getServiceImage());
+            vdur.setServiceName(vdu.getServiceName());
             vdur.setServiceType(vdu.getServiceType());
             vdur.setServicePorts(vdu.getServicePorts());
             vdur.setResourceRequirements(vdu.getResourceRequirements());
