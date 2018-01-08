@@ -267,24 +267,30 @@ public class JavaStackCore {
 
       post = new HttpPost(buildUrl.toString());
       String body = String.format(
-        "{\n" + "    \"auth\": {\n" 
-              + "        \"identity\": {\n" 
-              + "            \"methods\": [\n"
-              + "                \"password\"\n" 
-              + "            ],\n"
-              + "            \"password\": {\n" 
-              + "                \"user\": {\n"
-              + "                    \"name\": \"%s\",\n" 
-              + "                    \"domain\": {\n"
-              + "                        \"name\": \"%s\"\n" 
-              + "                    },\n"
-              + "                    \"password\": \"%s\"\n" 
-              + "                }\n"
-              + "            }\n" 
-              + "        }\n" 
-              + "    }\n" 
-              + "}",
-          this.username, this.domain, this.password);
+              "{\n" +
+                      "    \"auth\": {\n" +
+                      "        \"identity\": {\n" +
+                      "            \"methods\": [\n" +
+                      "                \"password\"\n" +
+                      "            ],\n" +
+                      "            \"password\": {\n" +
+                      "                \"user\": {\n" +
+                      "                \t\"name\": \"%s\",\n" +
+                      "                \t\"domain\": {\n" +
+                      "                        \"name\": \"%s\"\n" +
+                      "                    },\n" +
+                      "                    \"password\": \"%s\"\n" +
+                      "                }\n" +
+                      "            }\n" +
+                      "        },\n" +
+                      "        \"scope\": {\n" +
+                      "        \t\"project\": {\n" +
+                      "                \"id\": \"%s\"\n" +
+                      "            }\n" +
+                      "        }\n" +
+                      "    }\n" +
+                      "}",
+          this.username, this.domain, this.password, this.projectId);
 
       post.setEntity(new StringEntity(body, ContentType.APPLICATION_JSON));
 
