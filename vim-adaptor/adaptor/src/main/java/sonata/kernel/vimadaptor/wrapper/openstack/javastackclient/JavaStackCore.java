@@ -55,9 +55,12 @@ import sonata.kernel.vimadaptor.wrapper.openstack.javastackclient.models.authent
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 
@@ -320,39 +323,38 @@ public class JavaStackCore {
 
         for (EndpointItem endpointItem : catalogItem.getEndpoints()) {
           if (endpointItem.getIface().equals("public")) {
-            String[] path_port = endpointItem.getUrl().split(":");;
-            String[] path = path_port[2].split("/");
+            String port;
             String version = "";
-	    String port;
+            URL url = new URL(endpointItem.getUrl());
+            String[] path = url.getPath().replaceFirst("/", "").split("/");
+            port = String.valueOf(url.getPort() != -1 ? url.getPort() : 80);
+
+            Logger.debug("[JavaStack] Service: " + type + ", Port: " + port + ", Path: " + Arrays.toString(path));
 
             switch (type) {
               case "identity":
-                port = path[0];
-		if (path.length > 1)
-                version = path[1];
+		        if (path.length > 0)
+                  version = path[0];
                 Identity.setPORT(port);
                 Identity.setVERSION(version);
                 break;
 
               case "orchestration":
-                port = path[0];
-		if (path.length > 1)
-                version = path[1];
+		        if (path.length > 0)
+                  version = path[0];
                 Orchestration.setPORT(port);
                 Orchestration.setVERSION(version);
                 break;
 
               case "image":
-                port = path[0];
                 version = "v2";
                 Image.setPORT(port);
                 Image.setVERSION(version);
                 break;
 
               case "compute":
-                port = path[0];
-		if (path.length > 1)
-                version = path[1];
+		        if (path.length > 0)
+                  version = path[0];
                 Compute.setPORT(port);
                 Compute.setVERSION(version);
                 break;
