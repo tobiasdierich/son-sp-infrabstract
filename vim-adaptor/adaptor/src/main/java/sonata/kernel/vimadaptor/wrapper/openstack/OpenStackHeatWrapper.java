@@ -513,7 +513,8 @@ public class OpenStackHeatWrapper extends ComputeWrapper {
       output = client.getResourceUtilizasion();
       Logger.info("OpenStack wrapper - Resource utilisation retrieved.");
     } catch (IOException e) {
-      Logger.error("OpenStack wrapper - Unable to connect to PoP.");;
+      Logger.error("OpenStack wrapper - Unable to connect to PoP. Error:");
+      Logger.error(e.getMessage());
       output = new ResourceUtilisation();
       output.setTotCores(0);
       output.setUsedCores(0);
