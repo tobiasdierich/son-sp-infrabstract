@@ -97,7 +97,7 @@ public class OpenStackHeatClient {
     javaStack.setPassword(password);
     javaStack.setDomain(domain);
     javaStack.setProjectName(tenantName);
-    javaStack.setProjectId(null);
+    javaStack.setProjectId(tenantName);
     javaStack.setAuthenticated(false);
     // Authenticate
     javaStack.authenticateClientV3(identityPort);
