@@ -298,13 +298,14 @@ public class JavaStackCore {
       post.setEntity(new StringEntity(body, ContentType.APPLICATION_JSON));
 
       Logger.debug("[JavaStack] Authenticating client...");
-      Logger.debug("[JavaStack] " + post.toString());
-      // Logger.debug("[JavaStack] " + body);
 
       response = httpClient.execute(post);
+      int statusCode = response.getStatusLine().getStatusCode();
 
-      Logger.debug("[JavaStack] Authentication response:");
-      Logger.debug(response.toString());
+      if (statusCode != 201) {
+        Logger.debug("[JavaStack] Authentication response:");
+        Logger.debug(response.toString());
+      }
 
       if (response.containsHeader("X-Subject-Token")) {
         this.token_id = response.getFirstHeader("X-Subject-Token").getValue();
@@ -312,8 +313,10 @@ public class JavaStackCore {
 
       mapper = new ObjectMapper();
       String httpResponseString = JavaStackUtils.convertHttpResponseToString(response);
-      Logger.debug("[JavaStack] Authentication response body:");
-      Logger.debug(httpResponseString);
+      if (statusCode != 201) {
+        Logger.debug("[JavaStack] Authentication response body:");
+        Logger.debug(httpResponseString);
+      }
       AuthenticationDataV3 auth = mapper.readValue(httpResponseString, AuthenticationDataV3.class);
 
       ArrayList<CatalogItem> catalogItems = auth.getToken().getCatalog();
@@ -329,7 +332,7 @@ public class JavaStackCore {
             String[] path = url.getPath().replaceFirst("/", "").split("/");
             port = String.valueOf(url.getPort() != -1 ? url.getPort() : 80);
 
-            Logger.debug("[JavaStack] Service: " + type + ", Port: " + port + ", Path: " + Arrays.toString(path));
+            //Logger.debug("[JavaStack] Service: " + type + ", Port: " + port + ", Path: " + Arrays.toString(path));
 
             switch (type) {
               case "identity":
